@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Базовые правила: для всех остальных сайтов используем системные сертификаты -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Правила конкретно для доменов GigaChat из документации -->
+    <domain-config>
+        <!-- Основной домен для запросов к моделям -->
+        <domain includeSubdomains="true">giga.chat</domain>
+        <!-- Домен для получения OAuth-токена -->
+        <domain includeSubdomains="true">devices.sberbank.ru</domain>
+
+        <trust-anchors>
+            <!-- Доверяем системным ЦА + нашему локальному файлу -->
+            <certificates src="system" />
+            <certificates src="@raw/russian_trusted_root_ca" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>
