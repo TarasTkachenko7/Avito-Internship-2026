@@ -1,6 +1,5 @@
 package com.example.avito_testing_2026_autum.notes.data.repository
 
-import com.example.avito_testing_2026_autum.core.data.local.AppDatabase
 import com.example.avito_testing_2026_autum.core.dispatchers.DispatchersProvider
 import com.example.avito_testing_2026_autum.notes.data.local.NoteDao
 import com.example.avito_testing_2026_autum.notes.data.mapper.toDomain
@@ -30,7 +29,7 @@ class NoteRepositoryImpl(
     }
 
     override suspend fun getNoteById(id: Long): Note? = withContext(dispatchers.io) {
-        return@withContext dao.getNoteById(id)?.toDomain()
+        dao.getNoteById(id)?.toDomain()
     }
 
     override suspend fun deleteNoteById(id: Long) = withContext(dispatchers.io){
