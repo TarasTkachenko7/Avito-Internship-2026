@@ -1,7 +1,7 @@
 package com.example.avito_testing_2026_autum
 
 import android.app.Application
-import com.example.avito_testing_2026_autum.di.appModules
+import com.example.avito_testing_2026_autum.di.appModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -14,7 +14,7 @@ class App : Application() {
         startKoin() {
             androidLogger(Level.ERROR)
             androidContext(this@App)
-            modules(appModules)
+            modules(appModule)
         }
     }
 }
