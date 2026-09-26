@@ -1,7 +1,8 @@
 package com.example.avito_testing_2026_autum.core.di
 
 import androidx.room.Room
-import com.example.avito_testing_2026_autum.core.data.local.AppDatabase
+import com.example.avito_testing_2026_autum.core.data.local.database.AppDatabase
+import com.example.avito_testing_2026_autum.core.data.local.datastore.dataStore
 import com.example.avito_testing_2026_autum.core.dispatchers.DispatchersProvider
 import com.example.avito_testing_2026_autum.core.dispatchers.StandardDispatcher
 import org.koin.android.ext.koin.androidContext
@@ -18,6 +19,8 @@ val coreModule = module {
             "avito_database"
         ).build()
     }
+
+    single { androidContext().dataStore }
 
     single { get<AppDatabase>().noteDao }
     single { get<AppDatabase>().taskDao }
