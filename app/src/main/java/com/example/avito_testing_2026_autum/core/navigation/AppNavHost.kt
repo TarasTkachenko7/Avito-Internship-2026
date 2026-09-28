@@ -10,6 +10,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.example.avito_testing_2026_autum.notes.presentation.NotesScreenRoot
 
 @Composable
 fun AppNavHost(
@@ -22,9 +23,11 @@ fun AppNavHost(
         modifier = modifier
     ) {
         composable<Screen.Notes> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Здесь будет список Заметок")
-            }
+            NotesScreenRoot(
+                onNavigateToEditor = { noteId ->
+                    navController.navigate(Screen.NoteEditor(noteId))
+                }
+            )
         }
 
         composable<Screen.Tasks> {
