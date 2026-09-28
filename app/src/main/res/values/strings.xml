@@ -4,4 +4,21 @@
     <string name="navigation_item_notes">Заметки</string>
     <string name="navigation_item_tasks">Задачи</string>
     <string name="navigation_item_settings">Настройки</string>
+
+    <string name="delete_note_dialog_title">Удалить заметку?</string>
+    <string name="delete_note_dialog_message">Это действие нельзя будет отменить.</string>
+    <string name="action_delete">Удалить</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="note_preview">Превью заметки</string>
+    <string name="no_image">Нет изображения</string>
+    <string name="find_notes">Поиск заметок...</string>
+    <string name="clear">Очистить</string>
+    <string name="sorting">Сортировка\n</string>
+    <string name="first_new">Сначала новые</string>
+    <string name="first_old">Сначала старые\n</string>
+    <string name="delete_mode">Режим удаления</string>
+    <string name="create_note">Создать заметку\n</string>
+    <string name="dont_have_notes">У вас пока нет заметок</string>
+    <string name="not_find">Ничего не найдено</string>
+
 </resources>

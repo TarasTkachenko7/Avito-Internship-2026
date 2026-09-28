@@ -1,4 +1,4 @@
-package com.example.avito_testing_2026_autum.notes.presentation.state
+package com.example.avito_testing_2026_autum.notes.presentation.contract
 
 import com.example.avito_testing_2026_autum.core.presentation.UiEffect
 import com.example.avito_testing_2026_autum.core.presentation.UiEvent
@@ -27,7 +27,7 @@ sealed interface NotesEvent : UiEvent {
     data object OnConfirmDelete : NotesEvent
     data object OnDismissDeleteDialog : NotesEvent
     data class OnSearchQueryChanged(val query: String) : NotesEvent
-    data class OnSortClicked(val sortedType: String) : NotesEvent
+    data class OnSortClicked(val sortType: SortType) : NotesEvent
 }
 
 sealed interface NotesEffect : UiEffect {
