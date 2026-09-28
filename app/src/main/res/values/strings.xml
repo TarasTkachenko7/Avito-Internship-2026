@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Avito Notes Tasks</string>
+
+    <string name="navigation_item_notes">Заметки</string>
+    <string name="navigation_item_tasks">Задачи</string>
+    <string name="navigation_item_settings">Настройки</string>
 </resources>
