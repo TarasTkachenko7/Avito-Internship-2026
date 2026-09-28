@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.avito_testing_2026_autum.core.presentation.screens.MainScreen
 import com.example.avito_testing_2026_autum.ui.theme.AvitoNotesTasksTheme
 
 class MainActivity : ComponentActivity() {
@@ -21,12 +22,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AvitoNotesTasksTheme {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = "Avito Notes & Tasks (Foundation Ready)")
-                }
+                MainScreen()
             }
         }
     }
