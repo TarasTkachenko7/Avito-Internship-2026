@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.example.avito_testing_2026_autum.notes.presentation.NotesScreenRoot
+import com.example.avito_testing_2026_autum.notes.presentation.editor.NoteEditorScreenRoot
 
 @Composable
 fun AppNavHost(
@@ -45,12 +46,12 @@ fun AppNavHost(
         composable<Screen.NoteEditor> { backStackEntry ->
             val args = backStackEntry.toRoute<Screen.NoteEditor>()
 
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    if (args.noteId == -1L) "Создание новой заметки"
-                    else "Редактирование заметки с ID: ${args.noteId}"
-                )
-            }
+            NoteEditorScreenRoot(
+                noteId = args.noteId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }

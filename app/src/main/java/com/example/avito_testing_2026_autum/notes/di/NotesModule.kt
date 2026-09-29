@@ -4,7 +4,10 @@ import com.example.avito_testing_2026_autum.notes.data.repository.NoteRepository
 import com.example.avito_testing_2026_autum.notes.domain.repository.NoteRepository
 import com.example.avito_testing_2026_autum.notes.domain.usecases.DeleteNoteUseCase
 import com.example.avito_testing_2026_autum.notes.domain.usecases.GetNotesUseCase
+import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.GetNoteByIdUseCase
+import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.UpsertNoteUseCase
 import com.example.avito_testing_2026_autum.notes.presentation.NotesViewModel
+import com.example.avito_testing_2026_autum.notes.presentation.editor.NoteEditorViewModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -17,7 +20,10 @@ val notesModule = module {
 
     factoryOf(::GetNotesUseCase)
     factoryOf(::DeleteNoteUseCase)
+    factoryOf(::GetNoteByIdUseCase)
+    factoryOf(::UpsertNoteUseCase)
 
     viewModelOf(::NotesViewModel)
+    viewModelOf(::NoteEditorViewModel)
 
 }
