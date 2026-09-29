@@ -20,5 +20,10 @@
     <string name="create_note">Создать заметку\n</string>
     <string name="dont_have_notes">У вас пока нет заметок</string>
     <string name="not_find">Ничего не найдено</string>
+    <string name="action_save">Сохранить\n</string>
+    <string name="delete_photo">Удалить фото</string>
+    <string name="add_photo">Прикрепить фото</string>
+    <string name="title">Заголовок\n</string>
+    <string name="text">Текст заметки...</string>
 
 </resources>
