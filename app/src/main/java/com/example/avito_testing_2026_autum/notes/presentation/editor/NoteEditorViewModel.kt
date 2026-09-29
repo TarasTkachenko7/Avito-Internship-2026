@@ -56,7 +56,18 @@ class NoteEditorViewModel(
                 setState { it.copy(text = event.text) }
             }
             is NoteEditorEvent.OnImageSelected -> {
-                setState { it.copy(imageUri = event.imageUri) }
+                setState {
+                    it.copy(
+                        imageUri = event.imageUri,
+                        showAttachmentDialog = false
+                    )
+                }
+            }
+            is NoteEditorEvent.OnAttachmentClicked -> {
+                setState { it.copy(showAttachmentDialog = true) }
+            }
+            is NoteEditorEvent.OnDismissAttachmentDialog -> {
+                setState { it.copy(showAttachmentDialog = false) }
             }
             is NoteEditorEvent.OnSaveClicked -> {
                 saveNote()
