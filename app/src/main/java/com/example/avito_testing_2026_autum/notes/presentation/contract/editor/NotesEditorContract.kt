@@ -8,7 +8,8 @@ data class NoteEditorUiState(
     val isLoading: Boolean = true,
     val title: String = "",
     val text: String = "",
-    val imageUri: String? = null
+    val imageUri: String? = null,
+    val showAttachmentDialog: Boolean = false
 ) : UiState {
     val isSaveButtonEnabled: Boolean
         get() = title.isNotBlank()
@@ -20,6 +21,8 @@ sealed interface NoteEditorEvent : UiEvent {
     data class OnImageSelected(val imageUri: String?) : NoteEditorEvent
     data object OnSaveClicked : NoteEditorEvent
     data object OnBackClicked : NoteEditorEvent
+    data object OnAttachmentClicked : NoteEditorEvent
+    data object OnDismissAttachmentDialog : NoteEditorEvent
 }
 
 sealed interface NoteEditorEffect : UiEffect {

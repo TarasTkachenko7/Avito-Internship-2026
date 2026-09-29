@@ -10,9 +10,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -24,6 +30,12 @@ import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.N
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import com.example.avito_testing_2026_autum.R
+import com.example.avito_testing_2026_autum.core.utils.copyImageToInternalStorage
+import com.example.avito_testing_2026_autum.core.utils.createTempImageFile
+import com.example.avito_testing_2026_autum.notes.presentation.components.editor.AttachmentDialog
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun NoteEditorScreenRoot(
@@ -58,10 +70,35 @@ private fun NoteEditorScreenContent(
     state: NoteEditorUiState,
     onEvent: (NoteEditorEvent) -> Unit
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var tempImageUri by rememberSaveable { mutableStateOf<android.net.Uri?>(null) }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            if (success && tempImageUri != null) {
+                coroutineScope.launch(Dispatchers.IO) {
+                    val permanentPath = context.copyImageToInternalStorage(tempImageUri!!)
+                    withContext(Dispatchers.Main) {
+                        onEvent(NoteEditorEvent.OnImageSelected(permanentPath))
+                    }
+                }
+            }
+        }
+    )
+
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
-            if (uri != null) onEvent(NoteEditorEvent.OnImageSelected(uri.toString()))
+            if (uri != null) {
+                coroutineScope.launch(Dispatchers.IO) {
+                    val permanentPath = context.copyImageToInternalStorage(uri)
+                    withContext(Dispatchers.Main) {
+                        onEvent(NoteEditorEvent.OnImageSelected(permanentPath))
+                    }
+                }
+            }
         }
     )
 
@@ -71,9 +108,7 @@ private fun NoteEditorScreenContent(
                 isSaveButtonEnabled = state.isSaveButtonEnabled,
                 onBackClick = { onEvent(NoteEditorEvent.OnBackClicked) },
                 onSaveClick = { onEvent(NoteEditorEvent.OnSaveClicked) },
-                onAddImageClick = {
-                    photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                }
+                onAddImageClick = { onEvent(NoteEditorEvent.OnAttachmentClicked) }
             )
         }
     ) { paddingValues ->
@@ -125,5 +160,26 @@ private fun NoteEditorScreenContent(
                     .weight(1f)
             )
         }
+    }
+
+    if (state.showAttachmentDialog) {
+        AttachmentDialog(
+            onDismiss = { onEvent(NoteEditorEvent.OnDismissAttachmentDialog) },
+            onGalleryClick = {
+                photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            },
+            onCameraClick = {
+                val tempFile = context.createTempImageFile()
+
+                val uri = androidx.core.content.FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    tempFile
+                )
+
+                tempImageUri = uri
+                cameraLauncher.launch(uri)
+            }
+        )
     }
 }
