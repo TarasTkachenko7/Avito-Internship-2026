@@ -1,6 +1,7 @@
 package com.example.avito_testing_2026_autum.core.data.local.files
 
 import android.content.Context
+import android.util.Log
 import androidx.core.net.toUri
 import com.example.avito_testing_2026_autum.core.dispatchers.DispatchersProvider
 import com.example.avito_testing_2026_autum.core.domain.manager.FileManager
@@ -14,7 +15,6 @@ class FileManagerImpl(
     context: Context,
     private val dispatchers: DispatchersProvider
 ) : FileManager {
-
     private val appContext = context.applicationContext
 
     override suspend fun createTempImageFile(prefix: String): File = withContext(dispatchers.io) {
@@ -26,9 +26,10 @@ class FileManagerImpl(
         return withContext(dispatchers.io) {
             try {
                 val uri = uriString.toUri()
-                val inputStream = appContext.contentResolver.openInputStream(uri) ?: return@withContext null
+                val inputStream =
+                    appContext.contentResolver.openInputStream(uri) ?: return@withContext null
 
-                val fileName = "${prefix}${System.currentTimeMillis()}_${UUID.randomUUID().toString().take(8)}.jpg"
+                val fileName = "${prefix}${System.currentTimeMillis()}_${UUID.randomUUID()}.jpg"
                 val filesDirectory = appContext.filesDir.apply { mkdirs() }
                 val destinationFile = File(filesDirectory, fileName)
 
@@ -41,7 +42,7 @@ class FileManagerImpl(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("FileManagerImpl", "Failed to copy image to internal storage", e)
                 null
             }
         }
