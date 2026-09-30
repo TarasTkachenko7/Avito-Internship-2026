@@ -15,7 +15,7 @@ import com.example.avito_testing_2026_autum.tasks.data.local.TaskEntity
     version = 1,
     exportSchema = true
 )
-abstract class AppDatabase: RoomDatabase() {
+abstract class AppDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
     abstract fun taskDao(): TaskDao
 }

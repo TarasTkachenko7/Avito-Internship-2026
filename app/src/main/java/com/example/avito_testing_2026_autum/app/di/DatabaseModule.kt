@@ -2,7 +2,6 @@ package com.example.avito_testing_2026_autum.app.di
 
 import androidx.room.Room
 import com.example.avito_testing_2026_autum.app.local.database.AppDatabase
-import com.example.avito_testing_2026_autum.app.local.datastore.provideSettingsDataStore
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
