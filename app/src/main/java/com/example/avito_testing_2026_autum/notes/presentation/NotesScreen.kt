@@ -36,7 +36,7 @@ import com.example.avito_testing_2026_autum.notes.domain.model.Note
 @Composable
 fun NotesScreenRoot(
     viewModel: NotesViewModel = koinViewModel(),
-    onNavigateToEditor: (Long) -> Unit
+    onNavigateToEditor: (Long?) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 

@@ -11,13 +11,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.avito_testing_2026_autum.root.navigation.AppNavHost
 import com.example.avito_testing_2026_autum.root.navigation.NavigationItem
-import androidx.navigation.NavDestination.Companion.hasRoute
 
 @Composable
 fun MainScreen() {
@@ -27,29 +29,18 @@ fun MainScreen() {
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                NavigationItem.entries.forEach { item ->
-
-                    val isSelected = currentDestination?.hierarchy?.any {
-                        it.hasRoute(item.route::class)
-                    } == true
-
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = {
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(item.icon, contentDescription = stringResource(item.titleResId)) },
-                        label = { Text(stringResource(item.titleResId)) }
-                    )
+            AppBottomBar(
+                currentDestination = currentDestination,
+                onItemClick = { item ->
+                    navController.navigate(item.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 }
-            }
+            )
         }
     ) { innerPadding ->
         AppNavHost(
@@ -58,5 +49,33 @@ fun MainScreen() {
                 .fillMaxSize()
                 .padding(innerPadding)
         )
+    }
+}
+
+@Composable
+private fun AppBottomBar(
+    currentDestination: NavDestination?,
+    onItemClick: (NavigationItem) -> Unit
+) {
+    NavigationBar {
+        NavigationItem.entries.forEach { item ->
+            val isSelected = currentDestination?.hierarchy?.any {
+                it.hasRoute(item.route::class)
+            } == true
+
+            NavigationBarItem(
+                selected = isSelected,
+                onClick = { onItemClick(item) },
+                icon = {
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = stringResource(item.titleResId)
+                    )
+                },
+                label = {
+                    Text(text = stringResource(item.titleResId))
+                }
+            )
+        }
     }
 }

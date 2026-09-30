@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class NoteEditorViewModel(
-    private val noteId: Long,
+    private val noteId: Long?,
     private val getNoteByIdUseCase: GetNoteByIdUseCase,
     private val upsertNoteUseCase: UpsertNoteUseCase
 ) : ViewModel() {
@@ -31,7 +31,7 @@ class NoteEditorViewModel(
     private var originalCreatedAt: Long = 0L
 
     init {
-        if (noteId != -1L) {
+        if (noteId != null) {
             loadNote(noteId)
         } else {
             _state.update { it.copy(isLoading = false) }

@@ -14,6 +14,6 @@ sealed interface Screen {
     data object Settings : Screen
 
     @Serializable
-    data class NoteEditor (val noteId: Long = -1L) : Screen
+    data class NoteEditor (val noteId: Long? = null) : Screen
 
 }

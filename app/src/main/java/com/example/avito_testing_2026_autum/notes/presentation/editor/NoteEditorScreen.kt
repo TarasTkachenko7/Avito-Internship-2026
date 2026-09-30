@@ -39,7 +39,7 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun NoteEditorScreenRoot(
-    noteId: Long,
+    noteId: Long?,
     onNavigateBack: () -> Unit,
     viewModel: NoteEditorViewModel = koinViewModel { parametersOf(noteId) }
 ) {
