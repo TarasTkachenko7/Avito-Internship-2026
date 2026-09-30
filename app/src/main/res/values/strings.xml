@@ -25,5 +25,8 @@
     <string name="add_photo">Прикрепить фото</string>
     <string name="title">Заголовок\n</string>
     <string name="text">Текст заметки...</string>
+    <string name="delete_task">Удалить задачу</string>
+    <string name="new_task">Новая задача...\n</string>
+    <string name="cancel">Отмена</string>
 
 </resources>

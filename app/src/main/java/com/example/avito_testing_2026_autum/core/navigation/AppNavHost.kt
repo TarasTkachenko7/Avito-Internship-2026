@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.example.avito_testing_2026_autum.notes.presentation.NotesScreenRoot
 import com.example.avito_testing_2026_autum.notes.presentation.editor.NoteEditorScreenRoot
+import com.example.avito_testing_2026_autum.tasks.presentation.TasksScreenRoot
 
 @Composable
 fun AppNavHost(
@@ -32,9 +33,7 @@ fun AppNavHost(
         }
 
         composable<Screen.Tasks> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Здесь будет список Задач")
-            }
+            TasksScreenRoot()
         }
 
         composable<Screen.Settings> {
