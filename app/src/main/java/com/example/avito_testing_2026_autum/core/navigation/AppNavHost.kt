@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.example.avito_testing_2026_autum.notes.presentation.NotesScreenRoot
 import com.example.avito_testing_2026_autum.notes.presentation.editor.NoteEditorScreenRoot
+import com.example.avito_testing_2026_autum.settings.presentation.SettingsScreenRoot
 import com.example.avito_testing_2026_autum.tasks.presentation.TasksScreenRoot
 
 @Composable
@@ -37,9 +38,7 @@ fun AppNavHost(
         }
 
         composable<Screen.Settings> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Здесь будут Настройки")
-            }
+            SettingsScreenRoot()
         }
 
         composable<Screen.NoteEditor> { backStackEntry ->
