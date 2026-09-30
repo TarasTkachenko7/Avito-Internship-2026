@@ -1,8 +1,5 @@
 package com.example.avito_testing_2026_autum.tasks.presentation.contract
 
-import com.example.avito_testing_2026_autum.core.presentation.UiEffect
-import com.example.avito_testing_2026_autum.core.presentation.UiEvent
-import com.example.avito_testing_2026_autum.core.presentation.UiState
 import com.example.avito_testing_2026_autum.tasks.domain.model.Task
 
 enum class SortType {
@@ -18,9 +15,9 @@ data class TasksUiState(
     val taskIdToDelete: Long? = null,
     val newTaskTitle: String = "",
     val isCreatingTask: Boolean = false,
-): UiState
+)
 
-sealed interface TasksEvent : UiEvent {
+sealed interface TasksEvent {
     data class OnSearchQueryChanged(val query: String) : TasksEvent
     data class OnSortClicked(val sortType: SortType) : TasksEvent
     data class OnCheckBoxClicked(val task: Task, val isCompleted: Boolean) : TasksEvent
@@ -31,6 +28,6 @@ sealed interface TasksEvent : UiEvent {
     data object OnCancelNewTask : TasksEvent
 }
 
-sealed interface TasksEffect : UiEffect {
+sealed interface TasksEffect {
     data object FocusOnNewTask : TasksEffect
 }

@@ -1,8 +1,5 @@
 package com.example.avito_testing_2026_autum.notes.presentation.contract
 
-import com.example.avito_testing_2026_autum.core.presentation.UiEffect
-import com.example.avito_testing_2026_autum.core.presentation.UiEvent
-import com.example.avito_testing_2026_autum.core.presentation.UiState
 import com.example.avito_testing_2026_autum.notes.domain.model.Note
 
 enum class SortType {
@@ -17,9 +14,9 @@ data class NotesUiState (
     val isDeleteModeActive: Boolean = false,
     val sortType: SortType = SortType.DATE_DESC,
     val noteIdToDelete: Long? = null
-): UiState
+)
 
-sealed interface NotesEvent : UiEvent {
+sealed interface NotesEvent {
     data object OnCreateNoteClicked : NotesEvent
     data object OnToggleDeleteMode : NotesEvent
     data class OnNoteClicked(val noteId: Long) : NotesEvent
@@ -30,6 +27,6 @@ sealed interface NotesEvent : UiEvent {
     data class OnSortClicked(val sortType: SortType) : NotesEvent
 }
 
-sealed interface NotesEffect : UiEffect {
+sealed interface NotesEffect {
     data class NavigateToEditor(val noteId: Long) : NotesEffect
 }

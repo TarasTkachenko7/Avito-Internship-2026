@@ -1,22 +1,32 @@
 package com.example.avito_testing_2026_autum.notes.presentation.editor
 
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.avito_testing_2026_autum.core.presentation.BaseViewModel
 import com.example.avito_testing_2026_autum.notes.domain.model.Note
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.GetNoteByIdUseCase
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.UpsertNoteUseCase
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorEffect
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorEvent
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorUiState
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class NoteEditorViewModel(
     private val noteId: Long,
     private val getNoteByIdUseCase: GetNoteByIdUseCase,
     private val upsertNoteUseCase: UpsertNoteUseCase
-): BaseViewModel<NoteEditorUiState, NoteEditorEvent, NoteEditorEffect>(
-    initialValue = NoteEditorUiState()
-) {
+) : ViewModel() {
+
+    private val _state = MutableStateFlow(NoteEditorUiState())
+    val state: StateFlow<NoteEditorUiState> = _state.asStateFlow()
+
+    private val _effect = Channel<NoteEditorEffect>(Channel.BUFFERED)
+    val effect = _effect.receiveAsFlow()
 
     private var originalCreatedAt: Long = 0L
 
@@ -24,7 +34,7 @@ class NoteEditorViewModel(
         if (noteId != -1L) {
             loadNote(noteId)
         } else {
-            setState { it.copy(isLoading = false) }
+            _state.update { it.copy(isLoading = false) }
         }
     }
 
@@ -33,7 +43,7 @@ class NoteEditorViewModel(
             val note = getNoteByIdUseCase(id)
             if (note != null) {
                 originalCreatedAt = note.createdAt
-                setState {
+                _state.update {
                     it.copy(
                         title = note.title,
                         text = note.text.orEmpty(),
@@ -42,39 +52,27 @@ class NoteEditorViewModel(
                     )
                 }
             } else {
-                setState { it.copy(isLoading = false) }
+                _state.update { it.copy(isLoading = false) }
             }
         }
     }
 
-    override fun handleEvent(event: NoteEditorEvent) {
+    fun handleEvent(event: NoteEditorEvent) {
         when (event) {
-            is NoteEditorEvent.OnTitleChanged -> {
-                setState { it.copy(title = event.title) }
-            }
-            is NoteEditorEvent.OnTextChanged -> {
-                setState { it.copy(text = event.text) }
-            }
+            is NoteEditorEvent.OnTitleChanged -> _state.update { it.copy(title = event.title) }
+            is NoteEditorEvent.OnTextChanged -> _state.update { it.copy(text = event.text) }
             is NoteEditorEvent.OnImageSelected -> {
-                setState {
+                _state.update {
                     it.copy(
                         imageUri = event.imageUri,
                         showAttachmentDialog = false
                     )
                 }
             }
-            is NoteEditorEvent.OnAttachmentClicked -> {
-                setState { it.copy(showAttachmentDialog = true) }
-            }
-            is NoteEditorEvent.OnDismissAttachmentDialog -> {
-                setState { it.copy(showAttachmentDialog = false) }
-            }
-            is NoteEditorEvent.OnSaveClicked -> {
-                saveNote()
-            }
-            is NoteEditorEvent.OnBackClicked -> {
-                sendEffect { NoteEditorEffect.NavigateBack }
-            }
+            is NoteEditorEvent.OnAttachmentClicked -> _state.update { it.copy(showAttachmentDialog = true) }
+            is NoteEditorEvent.OnDismissAttachmentDialog -> _state.update { it.copy(showAttachmentDialog = false) }
+            is NoteEditorEvent.OnSaveClicked -> saveNote()
+            is NoteEditorEvent.OnBackClicked -> sendEffect(NoteEditorEffect.NavigateBack)
         }
     }
 
@@ -92,8 +90,11 @@ class NoteEditorViewModel(
                 createdAt = if (isNewNote) System.currentTimeMillis() else originalCreatedAt
             )
             upsertNoteUseCase(noteToSave)
-            sendEffect { NoteEditorEffect.NavigateBack }
+            sendEffect(NoteEditorEffect.NavigateBack)
         }
     }
 
+    private fun sendEffect(effect: NoteEditorEffect) {
+        viewModelScope.launch { _effect.send(effect) }
+    }
 }
