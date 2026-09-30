@@ -1,4 +1,4 @@
-package com.example.avito_testing_2026_autum.core.presentation.screens
+package com.example.avito_testing_2026_autum.root.presentation
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -15,8 +15,8 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.avito_testing_2026_autum.core.navigation.AppNavHost
-import com.example.avito_testing_2026_autum.core.navigation.NavigationItem
+import com.example.avito_testing_2026_autum.root.navigation.AppNavHost
+import com.example.avito_testing_2026_autum.root.navigation.NavigationItem
 import androidx.navigation.NavDestination.Companion.hasRoute
 
 @Composable

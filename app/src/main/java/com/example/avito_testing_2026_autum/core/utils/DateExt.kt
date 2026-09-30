@@ -1,10 +1,19 @@
 package com.example.avito_testing_2026_autum.core.utils
 
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Locale
 
-fun Long.toFormattedDateString(): String {
-    val sdf = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
-    return sdf.format(Date(this))
+private val baseFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+
+fun Long.toFormattedDateString(
+    zoneId: ZoneId = ZoneId.systemDefault(),
+    locale: Locale = Locale.getDefault()
+): String {
+    return Instant.ofEpochMilli(this)
+        .atZone(zoneId)
+        .format(baseFormatter.withLocale(locale))
 }

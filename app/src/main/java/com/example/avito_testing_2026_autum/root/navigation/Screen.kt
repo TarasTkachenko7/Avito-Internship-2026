@@ -1,4 +1,4 @@
-package com.example.avito_testing_2026_autum.core.navigation
+package com.example.avito_testing_2026_autum.root.navigation
 
 import kotlinx.serialization.Serializable
 

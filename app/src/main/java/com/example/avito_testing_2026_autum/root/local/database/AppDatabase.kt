@@ -1,4 +1,4 @@
-package com.example.avito_testing_2026_autum.core.data.local.database
+package com.example.avito_testing_2026_autum.root.local.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase

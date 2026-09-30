@@ -2,7 +2,6 @@ package com.example.avito_testing_2026_autum.core.dispatchers
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import okhttp3.Dispatcher
 
 interface DispatchersProvider {
     val main: CoroutineDispatcher
