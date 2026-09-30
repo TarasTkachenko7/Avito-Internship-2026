@@ -1,4 +1,4 @@
-package com.example.avito_testing_2026_autum
+package com.example.avito_testing_2026_autum.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

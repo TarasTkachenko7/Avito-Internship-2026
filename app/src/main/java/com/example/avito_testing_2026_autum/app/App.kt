@@ -1,18 +1,15 @@
-package com.example.avito_testing_2026_autum
+package com.example.avito_testing_2026_autum.app
 
 import android.app.Application
-import com.example.avito_testing_2026_autum.di.appModule
+import com.example.avito_testing_2026_autum.app.di.appModule
 import org.koin.android.ext.koin.androidContext
-import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
-import org.koin.core.logger.Level
 
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        startKoin() {
-            androidLogger(Level.ERROR)
+        startKoin {
             androidContext(this@App)
             modules(appModule)
         }

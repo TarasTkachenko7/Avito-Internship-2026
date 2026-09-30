@@ -1,4 +1,4 @@
-package com.example.avito_testing_2026_autum.di
+package com.example.avito_testing_2026_autum.app.di
 
 import com.example.avito_testing_2026_autum.ai.di.aiModule
 import com.example.avito_testing_2026_autum.core.di.coreModule
