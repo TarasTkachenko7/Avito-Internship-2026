@@ -1,5 +1,8 @@
-package com.example.avito_testing_2026_autum.root.presentation
+package com.example.avito_testing_2026_autum.app.presentation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -15,11 +18,10 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.avito_testing_2026_autum.root.navigation.AppNavHost
-import com.example.avito_testing_2026_autum.root.navigation.NavigationItem
+import com.example.avito_testing_2026_autum.app.navigation.AppNavHost
+import com.example.avito_testing_2026_autum.app.navigation.NavigationItem
 
 @Composable
 fun MainScreen() {
@@ -27,20 +29,32 @@ fun MainScreen() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
+    val isBottomBarVisible = currentDestination?.hierarchy?.any { destination ->
+        NavigationItem.entries.any { item ->
+            destination.hasRoute(item.route::class)
+        }
+    } == true
+
     Scaffold(
         bottomBar = {
-            AppBottomBar(
-                currentDestination = currentDestination,
-                onItemClick = { item ->
-                    navController.navigate(item.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+            AnimatedVisibility(
+                visible = isBottomBarVisible,
+                enter = slideInVertically { it },
+                exit = slideOutVertically { it }
+            ) {
+                AppBottomBar(
+                    currentDestination = currentDestination,
+                    onItemClick = { item ->
+                        navController.navigate(item.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
                     }
-                }
-            )
+                )
+            }
         }
     ) { innerPadding ->
         AppNavHost(

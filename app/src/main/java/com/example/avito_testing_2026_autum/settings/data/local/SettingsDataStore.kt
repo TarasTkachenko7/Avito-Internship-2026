@@ -1,4 +1,4 @@
-package com.example.avito_testing_2026_autum.root.local.datastore
+package com.example.avito_testing_2026_autum.settings.data.local
 
 import android.content.Context
 import androidx.datastore.core.DataStore

@@ -1,4 +1,4 @@
-package com.example.avito_testing_2026_autum.root.navigation
+package com.example.avito_testing_2026_autum.app.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons

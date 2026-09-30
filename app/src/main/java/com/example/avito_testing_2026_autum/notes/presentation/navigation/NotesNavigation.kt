@@ -1,12 +1,11 @@
 package com.example.avito_testing_2026_autum.notes.presentation.navigation
 
-import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.example.avito_testing_2026_autum.notes.presentation.NotesScreenRoot
 import com.example.avito_testing_2026_autum.notes.presentation.editor.NoteEditorScreenRoot
-import com.example.avito_testing_2026_autum.root.navigation.Screen
+import com.example.avito_testing_2026_autum.app.navigation.Screen
 
 fun NavGraphBuilder.notesGraph(
     onNavigateToEditor: (Long?) -> Unit,

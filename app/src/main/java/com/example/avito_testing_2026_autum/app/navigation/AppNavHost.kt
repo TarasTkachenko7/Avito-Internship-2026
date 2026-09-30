@@ -1,4 +1,4 @@
-package com.example.avito_testing_2026_autum.root.navigation
+package com.example.avito_testing_2026_autum.app.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier

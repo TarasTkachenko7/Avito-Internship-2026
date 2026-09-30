@@ -1,12 +1,12 @@
-package com.example.avito_testing_2026_autum.root.di
+package com.example.avito_testing_2026_autum.app.di
 
 import androidx.room.Room
-import com.example.avito_testing_2026_autum.root.local.database.AppDatabase
-import com.example.avito_testing_2026_autum.root.local.datastore.provideSettingsDataStore
+import com.example.avito_testing_2026_autum.app.local.database.AppDatabase
+import com.example.avito_testing_2026_autum.app.local.datastore.provideSettingsDataStore
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
-val rootModule = module {
+val databaseModule = module {
 
     single {
         Room.databaseBuilder(
@@ -15,8 +15,6 @@ val rootModule = module {
             "avito_database"
         ).build()
     }
-
-    single { provideSettingsDataStore(androidContext()) }
 
     single { get<AppDatabase>().noteDao() }
     single { get<AppDatabase>().taskDao() }
