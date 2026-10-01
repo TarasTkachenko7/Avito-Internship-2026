@@ -28,15 +28,15 @@ class NoteRepositoryImpl(
             .flowOn(dispatchers.io)
     }
 
-    override suspend fun getNoteById(id: Long): Note? = withContext(dispatchers.io) {
-        dao.getNoteById(id)?.toDomain()
+    override suspend fun getNoteById(id: Long): Note? {
+        return dao.getNoteById(id)?.toDomain()
     }
 
-    override suspend fun deleteNoteById(id: Long) = withContext(dispatchers.io) {
+    override suspend fun deleteNoteById(id: Long) {
         dao.deleteNoteById(id)
     }
 
-    override suspend fun upsertNote(note: Note) = withContext(dispatchers.io) {
+    override suspend fun upsertNote(note: Note) {
         dao.upsertNote(note.toEntity())
     }
 

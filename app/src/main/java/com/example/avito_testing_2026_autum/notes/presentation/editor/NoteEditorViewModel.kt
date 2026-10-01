@@ -3,6 +3,8 @@ package com.example.avito_testing_2026_autum.notes.presentation.editor
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import com.example.avito_testing_2026_autum.app.navigation.Screen
 import com.example.avito_testing_2026_autum.notes.domain.model.Note
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.CreateTempImageFileUseCase
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.GetNoteByIdUseCase
@@ -27,7 +29,7 @@ class NoteEditorViewModel(
     private val createTempImageFileUseCase: CreateTempImageFileUseCase
 ) : ViewModel() {
 
-    private val noteId: Long? = savedStateHandle.get<Long>("noteId")
+    private val noteId: Long? = savedStateHandle.toRoute<Screen.NoteEditor>().noteId
 
     private val _state = MutableStateFlow(NoteEditorUiState())
     val state: StateFlow<NoteEditorUiState> = _state.asStateFlow()

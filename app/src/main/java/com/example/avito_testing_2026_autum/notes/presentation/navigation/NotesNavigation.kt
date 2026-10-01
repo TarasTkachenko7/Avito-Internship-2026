@@ -17,10 +17,8 @@ fun NavGraphBuilder.notesGraph(
         )
     }
 
-    composable<Screen.NoteEditor> { backStackEntry ->
-        val args = backStackEntry.toRoute<Screen.NoteEditor>()
+    composable<Screen.NoteEditor> {
         NoteEditorScreenRoot(
-            noteId = args.noteId,
             onNavigateBack = onBackClick
         )
     }

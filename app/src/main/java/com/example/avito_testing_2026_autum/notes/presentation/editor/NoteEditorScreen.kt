@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -22,26 +21,25 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.avito_testing_2026_autum.R
+import com.example.avito_testing_2026_autum.core.utils.copyImageToInternalStorage
+import com.example.avito_testing_2026_autum.core.utils.createTempImageFile
+import com.example.avito_testing_2026_autum.notes.presentation.components.editor.AttachmentDialog
 import com.example.avito_testing_2026_autum.notes.presentation.components.editor.NoteAttachedImage
 import com.example.avito_testing_2026_autum.notes.presentation.components.editor.NoteEditorTopBar
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorEffect
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorEvent
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorUiState
-import org.koin.androidx.compose.koinViewModel
-import org.koin.core.parameter.parametersOf
-import com.example.avito_testing_2026_autum.R
-import com.example.avito_testing_2026_autum.core.utils.copyImageToInternalStorage
-import com.example.avito_testing_2026_autum.core.utils.createTempImageFile
-import com.example.avito_testing_2026_autum.notes.presentation.components.editor.AttachmentDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun NoteEditorScreenRoot(
-    noteId: Long?,
     onNavigateBack: () -> Unit,
-    viewModel: NoteEditorViewModel = koinViewModel { parametersOf(noteId) }
+    viewModel: NoteEditorViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
