@@ -5,6 +5,7 @@ import com.example.avito_testing_2026_autum.notes.data.local.NoteDao
 import com.example.avito_testing_2026_autum.notes.data.mapper.toDomain
 import com.example.avito_testing_2026_autum.notes.data.mapper.toEntity
 import com.example.avito_testing_2026_autum.notes.domain.model.Note
+import com.example.avito_testing_2026_autum.notes.domain.model.NoteSortOrder
 import com.example.avito_testing_2026_autum.notes.domain.repository.NoteRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
@@ -14,16 +15,15 @@ import kotlinx.coroutines.withContext
 class NoteRepositoryImpl(
     private val dao: NoteDao,
     private val dispatchers: DispatchersProvider
-): NoteRepository {
+) : NoteRepository {
 
-    override fun getNotesDesc(query: String): Flow<List<Note>> {
-        return dao.getNotesDesc(query)
-            .map { list -> list.map { it.toDomain() } }
-            .flowOn(dispatchers.io)
-    }
+    override fun getNotes(query: String, sortOrder: NoteSortOrder): Flow<List<Note>> {
+        val entitiesFlow = when (sortOrder) {
+            NoteSortOrder.DATE_DESC -> dao.getNotesDesc(query)
+            NoteSortOrder.DATE_ASC -> dao.getNotesAsc(query)
+        }
 
-    override fun getNotesAsc(query: String): Flow<List<Note>> {
-        return dao.getNotesAsc(query)
+        return entitiesFlow
             .map { list -> list.map { it.toDomain() } }
             .flowOn(dispatchers.io)
     }
@@ -32,7 +32,7 @@ class NoteRepositoryImpl(
         dao.getNoteById(id)?.toDomain()
     }
 
-    override suspend fun deleteNoteById(id: Long) = withContext(dispatchers.io){
+    override suspend fun deleteNoteById(id: Long) = withContext(dispatchers.io) {
         dao.deleteNoteById(id)
     }
 

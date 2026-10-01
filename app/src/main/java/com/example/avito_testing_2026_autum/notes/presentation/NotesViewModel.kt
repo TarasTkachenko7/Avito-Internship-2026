@@ -1,5 +1,6 @@
 package com.example.avito_testing_2026_autum.notes.presentation
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.avito_testing_2026_autum.notes.domain.usecases.DeleteNoteUseCase
@@ -7,11 +8,14 @@ import com.example.avito_testing_2026_autum.notes.domain.usecases.GetNotesUseCas
 import com.example.avito_testing_2026_autum.notes.presentation.contract.NotesEffect
 import com.example.avito_testing_2026_autum.notes.presentation.contract.NotesEvent
 import com.example.avito_testing_2026_autum.notes.presentation.contract.NotesUiState
+import com.example.avito_testing_2026_autum.notes.presentation.mapper.toUiModel
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -23,7 +27,7 @@ import kotlinx.coroutines.launch
 class NotesViewModel(
     private val getNotesUseCase: GetNotesUseCase,
     private val deleteNoteUseCase: DeleteNoteUseCase
-): ViewModel() {
+) : ViewModel() {
 
     private val _state = MutableStateFlow(NotesUiState())
     val state: StateFlow<NotesUiState> = _state.asStateFlow()
@@ -38,10 +42,17 @@ class NotesViewModel(
     private fun observeNotes() {
         viewModelScope.launch {
             state
-                .map { it.searchQuery to it.sortType }
+                .map { it.searchQuery to it.sortOrder }
                 .distinctUntilChanged()
-                .flatMapLatest { (query, sortType) ->
-                    getNotesUseCase(query, sortType)
+                .flatMapLatest { (query, sortOrder) ->
+                    getNotesUseCase(query, sortOrder)
+                }
+                .map { domainNotes ->
+                    domainNotes.map { it.toUiModel() }.toPersistentList()
+                }
+                .catch { exception ->
+                    Log.e("NotesViewModel", "Failed to observe notes", exception)
+                    _state.update { it.copy(isLoading = false) }
                 }
                 .collect { notesList ->
                     _state.update { it.copy(notes = notesList, isLoading = false) }
@@ -54,17 +65,21 @@ class NotesViewModel(
             is NotesEvent.OnSearchQueryChanged -> {
                 _state.update { it.copy(searchQuery = event.query) }
             }
+
             is NotesEvent.OnSortClicked -> {
-                _state.update { it.copy(sortType = event.sortType) }
+                _state.update { it.copy(sortOrder = event.sortOrder) }
             }
+
             is NotesEvent.OnNoteClicked -> {
                 if (!state.value.isDeleteModeActive) {
                     sendEffect(NotesEffect.NavigateToEditor(event.noteId))
                 }
             }
+
             is NotesEvent.OnCreateNoteClicked -> {
-                sendEffect(NotesEffect.NavigateToEditor(-1L))
+                sendEffect(NotesEffect.NavigateToEditor(null))
             }
+
             is NotesEvent.OnToggleDeleteMode -> {
                 _state.update {
                     it.copy(
@@ -73,9 +88,11 @@ class NotesViewModel(
                     )
                 }
             }
+
             is NotesEvent.OnDeleteNote -> {
                 _state.update { it.copy(noteIdToDelete = event.noteId) }
             }
+
             is NotesEvent.OnConfirmDelete -> {
                 val noteId = state.value.noteIdToDelete
                 if (noteId != null) {
@@ -85,6 +102,7 @@ class NotesViewModel(
                     }
                 }
             }
+
             is NotesEvent.OnDismissDeleteDialog -> {
                 _state.update { it.copy(noteIdToDelete = null) }
             }
@@ -92,7 +110,7 @@ class NotesViewModel(
     }
 
     private fun sendEffect(effect: NotesEffect) {
-        viewModelScope.launch { _effect.send(effect) }
+        _effect.trySend(effect)
     }
 
 }

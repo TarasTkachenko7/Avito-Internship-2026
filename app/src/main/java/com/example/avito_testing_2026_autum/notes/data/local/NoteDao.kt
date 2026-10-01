@@ -13,14 +13,14 @@ interface NoteDao {
         WHERE title LIKE '%' || :query || '%' 
         ORDER BY createdAt DESC
     """)
-    fun getNotesDesc(query: String = ""): Flow<List<NoteEntity>>
+    fun getNotesDesc(query: String): Flow<List<NoteEntity>>
 
     @Query("""
         SELECT * FROM notes 
         WHERE title LIKE '%' || :query || '%' 
         ORDER BY createdAt ASC
     """)
-    fun getNotesAsc(query: String = ""): Flow<List<NoteEntity>>
+    fun getNotesAsc(query: String): Flow<List<NoteEntity>>
 
     @Query("""
         SELECT * FROM notes 

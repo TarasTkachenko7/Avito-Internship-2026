@@ -14,13 +14,18 @@ data class NoteEditorUiState(
 sealed interface NoteEditorEvent {
     data class OnTitleChanged(val title: String) : NoteEditorEvent
     data class OnTextChanged(val text: String) : NoteEditorEvent
-    data class OnImageSelected(val imageUri: String?) : NoteEditorEvent
-    data object OnSaveClicked : NoteEditorEvent
-    data object OnBackClicked : NoteEditorEvent
     data object OnAttachmentClicked : NoteEditorEvent
     data object OnDismissAttachmentDialog : NoteEditorEvent
+    data object OnGalleryClicked : NoteEditorEvent
+    data object OnCameraClicked : NoteEditorEvent
+    data class OnImagePicked(val uriString: String) : NoteEditorEvent
+    data object OnCameraCaptureSuccess : NoteEditorEvent
+    data object OnRemoveImageClicked : NoteEditorEvent
+    data object OnSaveClicked : NoteEditorEvent
+    data object OnBackClicked : NoteEditorEvent
 }
 
 sealed interface NoteEditorEffect {
     data object NavigateBack : NoteEditorEffect
+    data class LaunchCamera(val uriString: String) : NoteEditorEffect
 }
