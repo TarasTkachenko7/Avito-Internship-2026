@@ -10,7 +10,13 @@ class AddInlineTaskUseCase(
         val cleanTitle = rawTitle.trim()
         if (cleanTitle.isBlank()) return false
 
-        repository.upsertTask(Task(title = cleanTitle))
+        val newTask = Task(
+            title = cleanTitle,
+            isCompleted = false,
+            createdAt = System.currentTimeMillis()
+        )
+
+        repository.upsertTask(newTask)
         return true
     }
 }
