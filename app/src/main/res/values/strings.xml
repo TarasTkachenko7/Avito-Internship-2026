@@ -28,5 +28,7 @@
     <string name="delete_task">Удалить задачу</string>
     <string name="new_task">Новая задача...\n</string>
     <string name="cancel">Отмена</string>
+    <string name="create_photo">Сделать снимок\n</string>
+    <string name="choose_photo">Выбрать снимок</string>
 
 </resources>

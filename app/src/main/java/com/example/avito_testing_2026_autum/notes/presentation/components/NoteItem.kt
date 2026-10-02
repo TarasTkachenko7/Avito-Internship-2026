@@ -30,13 +30,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.avito_testing_2026_autum.core.utils.toFormattedDateString
-import com.example.avito_testing_2026_autum.notes.domain.model.Note
 import com.example.avito_testing_2026_autum.R
+import com.example.avito_testing_2026_autum.core.utils.toFormattedDateString
+import com.example.avito_testing_2026_autum.notes.presentation.models.NoteUiModel
 
 @Composable
 fun NoteItem(
-    note: Note,
+    note: NoteUiModel,
     isDeleteModeActive: Boolean,
     onNoteClick: () -> Unit,
     onDeleteClick: () -> Unit,
@@ -68,7 +68,7 @@ fun NoteItem(
 
             NoteContent(
                 title = note.title,
-                createdAt = note.createdAt,
+                dateFormatted = note.dateFormatted,
                 modifier = Modifier.weight(1f)
             )
 
@@ -105,7 +105,7 @@ private fun NoteImage(imageUri: String?, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun NoteContent(title: String, createdAt: Long, modifier: Modifier = Modifier) {
+private fun NoteContent(title: String, dateFormatted: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         Text(
             text = title,
@@ -116,7 +116,7 @@ private fun NoteContent(title: String, createdAt: Long, modifier: Modifier = Mod
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = createdAt.toFormattedDateString(),
+            text = dateFormatted,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

@@ -5,16 +5,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.example.avito_testing_2026_autum.R
 
 @Composable
 fun DeleteConfirmationDialog(
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        modifier = modifier,
         title = {
             Text(text = stringResource(R.string.delete_note_dialog_title))
         },

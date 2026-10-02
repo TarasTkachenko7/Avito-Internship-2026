@@ -1,39 +1,52 @@
 package com.example.avito_testing_2026_autum.notes.presentation.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sort
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.example.avito_testing_2026_autum.notes.presentation.contract.SortType
 import com.example.avito_testing_2026_autum.R
+import com.example.avito_testing_2026_autum.notes.domain.model.NoteSortOrder
 
 @Composable
 fun NotesTopBar(
     searchQuery: String,
     isDeleteModeActive: Boolean,
     onSearchQueryChange: (String) -> Unit,
-    onSortSelect: (SortType) -> Unit,
+    onSortSelect: (NoteSortOrder) -> Unit,
     onToggleDeleteMode: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
-    var isSortMenuExpanded by rememberSaveable { mutableStateOf(false) }
-
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         TextField(
             value = searchQuery,
@@ -41,12 +54,18 @@ fun NotesTopBar(
             modifier = Modifier.weight(1f),
             placeholder = { Text(stringResource(R.string.find_notes)) },
             leadingIcon = {
-                Icon(imageVector = Icons.Default.Search, contentDescription = stringResource(R.string.find_notes))
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = stringResource(R.string.find_notes),
+                )
             },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
                     IconButton(onClick = { onSearchQueryChange("") }) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.clear))
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.clear),
+                        )
                     }
                 }
             },
@@ -54,42 +73,57 @@ fun NotesTopBar(
             shape = RoundedCornerShape(16.dp),
             colors = TextFieldDefaults.colors(
                 focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            )
+                unfocusedIndicatorColor = Color.Transparent,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
         )
 
         Spacer(modifier = Modifier.width(4.dp))
 
-        Box {
-            IconButton(onClick = { isSortMenuExpanded = true }) {
-                Icon(imageVector = Icons.Default.Sort, contentDescription = stringResource(R.string.sorting))
-            }
-            DropdownMenu(
-                expanded = isSortMenuExpanded,
-                onDismissRequest = { isSortMenuExpanded = false }
-            ) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.first_new)) },
-                    onClick = {
-                        onSortSelect(SortType.DATE_DESC)
-                        isSortMenuExpanded = false
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.first_old)) },
-                    onClick = {
-                        onSortSelect(SortType.DATE_ASC)
-                        isSortMenuExpanded = false
-                    }
-                )
-            }
-        }
+        SortMenuButton(onSortSelect = onSortSelect)
 
         IconButton(onClick = onToggleDeleteMode) {
             Icon(
                 imageVector = if (isDeleteModeActive) Icons.Default.Close else Icons.Default.DeleteOutline,
                 contentDescription = stringResource(R.string.delete_mode),
-                tint = if (isDeleteModeActive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                tint = if (isDeleteModeActive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SortMenuButton(
+    onSortSelect: (NoteSortOrder) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var isSortMenuExpanded by rememberSaveable { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        IconButton(onClick = { isSortMenuExpanded = true }) {
+            Icon(
+                imageVector = Icons.Default.Sort,
+                contentDescription = stringResource(R.string.sorting),
+            )
+        }
+        DropdownMenu(
+            expanded = isSortMenuExpanded,
+            onDismissRequest = { isSortMenuExpanded = false },
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.first_new)) },
+                onClick = {
+                    onSortSelect(NoteSortOrder.DATE_DESC)
+                    isSortMenuExpanded = false
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.first_old)) },
+                onClick = {
+                    onSortSelect(NoteSortOrder.DATE_ASC)
+                    isSortMenuExpanded = false
+                },
             )
         }
     }
