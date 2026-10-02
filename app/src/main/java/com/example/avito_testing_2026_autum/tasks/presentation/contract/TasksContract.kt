@@ -12,16 +12,15 @@ data class TasksUiState(
     val sortOrder: TaskSortOrder = TaskSortOrder.DATE_DESC,
     val filterType: TaskFilterType = TaskFilterType.ALL,
     val tasks: ImmutableList<TaskUiModel> = persistentListOf(),
-    val taskIdToDelete: Long? = null,
     val newTaskTitle: String = "",
-    val isCreatingTask: Boolean = false,
+    val isCreatingTask: Boolean = false
 )
 
 sealed interface TasksEvent {
     data class OnSearchQueryChanged(val query: String) : TasksEvent
     data class OnSortClicked(val sortOrder: TaskSortOrder) : TasksEvent
     data class OnFilterClicked(val filterType: TaskFilterType) : TasksEvent
-    data class OnCheckBoxClicked(val taskId: Long, val isCompleted: Boolean) : TasksEvent
+    data class OnTaskStatusChanged(val taskId: Long, val isCompleted: Boolean) : TasksEvent
     data class OnDeleteTaskClicked(val taskId: Long) : TasksEvent
     data object OnAddNewTaskClicked : TasksEvent
     data class OnNewTaskTitleChanged(val title: String) : TasksEvent
@@ -31,5 +30,6 @@ sealed interface TasksEvent {
 
 sealed interface TasksEffect {
     data object ScrollToTop : TasksEffect
+    data object FocusOnNewTask : TasksEffect
     data class ShowError(val message: String) : TasksEffect
 }

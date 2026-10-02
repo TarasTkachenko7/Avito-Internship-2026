@@ -50,13 +50,13 @@ class TasksViewModel(
                 .distinctUntilChanged()
                 .flatMapLatest { (query, sortType) ->
                     getTasksUseCase(query, sortType)
+                        .catch { exception ->
+                            Log.e("TasksViewModel", "Failed to observe tasks", exception)
+                            emit(emptyList())
+                        }
                 }
                 .map { domainTasks ->
                     domainTasks.map { it.toUiModel() }.toPersistentList()
-                }
-                .catch { exception ->
-                    Log.e("TasksViewModel", "Failed to observe tasks", exception)
-                    _state.update { it.copy(isLoading = false) }
                 }
                 .collect { tasksList ->
                     _state.update { it.copy(tasks = tasksList, isLoading = false) }
@@ -78,7 +78,7 @@ class TasksViewModel(
                 _state.update { it.copy(filterType = event.filterType) }
             }
 
-            is TasksEvent.OnCheckBoxClicked -> {
+            is TasksEvent.OnTaskStatusChanged -> {
                 viewModelScope.launch {
                     toggleTaskStatusUseCase(event.taskId, event.isCompleted)
                 }
@@ -100,8 +100,9 @@ class TasksViewModel(
             }
 
             is TasksEvent.OnSaveNewTask -> {
+                val titleToSave = state.value.newTaskTitle
                 viewModelScope.launch {
-                    val saved = addInlineTaskUseCase(state.value.newTaskTitle)
+                    val saved = addInlineTaskUseCase(titleToSave)
                     if (saved) {
                         _state.update { it.copy(isCreatingTask = false, newTaskTitle = "") }
                     } else {

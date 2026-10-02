@@ -26,14 +26,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.example.avito_testing_2026_autum.tasks.presentation.contract.SortType
+import com.example.avito_testing_2026_autum.R
+import com.example.avito_testing_2026_autum.tasks.domain.model.TaskSortOrder
 
 @Composable
 fun TasksTopBar(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    onSortSelect: (SortType) -> Unit,
+    onSortSelect: (TaskSortOrder) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isSortMenuExpanded by rememberSaveable { mutableStateOf(false) }
@@ -48,14 +50,20 @@ fun TasksTopBar(
             value = searchQuery,
             onValueChange = onSearchQueryChange,
             modifier = Modifier.weight(1f),
-            placeholder = { Text("Поиск задач...") },
+            placeholder = { Text(stringResource(R.string.find_tasks)) },
             leadingIcon = {
-                Icon(imageVector = Icons.Default.Search, contentDescription = "Поиск")
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = stringResource(R.string.find_tasks)
+                )
             },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
                     IconButton(onClick = { onSearchQueryChange("") }) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Очистить")
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.clear)
+                        )
                     }
                 }
             },
@@ -69,29 +77,42 @@ fun TasksTopBar(
 
         Spacer(modifier = Modifier.width(4.dp))
 
-        Box {
-            IconButton(onClick = { isSortMenuExpanded = true }) {
-                Icon(imageVector = Icons.Default.Sort, contentDescription = "Сортировка")
-            }
-            DropdownMenu(
-                expanded = isSortMenuExpanded,
-                onDismissRequest = { isSortMenuExpanded = false }
-            ) {
-                DropdownMenuItem(
-                    text = { Text("Сначала новые") },
-                    onClick = {
-                        onSortSelect(SortType.DATE_DESC)
-                        isSortMenuExpanded = false
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("Сначала старые") },
-                    onClick = {
-                        onSortSelect(SortType.DATE_ASC)
-                        isSortMenuExpanded = false
-                    }
-                )
-            }
+        TasksSortMenuButton(onSortSelect = onSortSelect)
+    }
+}
+
+@Composable
+private fun TasksSortMenuButton(
+    onSortSelect: (TaskSortOrder) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var isSortMenuExpanded by rememberSaveable { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        IconButton(onClick = { isSortMenuExpanded = true }) {
+            Icon(
+                imageVector = Icons.Default.Sort,
+                contentDescription = stringResource(R.string.sorting)
+            )
+        }
+        DropdownMenu(
+            expanded = isSortMenuExpanded,
+            onDismissRequest = { isSortMenuExpanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.first_new)) },
+                onClick = {
+                    onSortSelect(TaskSortOrder.DATE_DESC)
+                    isSortMenuExpanded = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.first_old)) },
+                onClick = {
+                    onSortSelect(TaskSortOrder.DATE_ASC)
+                    isSortMenuExpanded = false
+                }
+            )
         }
     }
 }

@@ -22,14 +22,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.example.avito_testing_2026_autum.tasks.domain.model.Task
 import com.example.avito_testing_2026_autum.R
+import com.example.avito_testing_2026_autum.tasks.presentation.models.TaskUiModel
 
 @Composable
 fun TaskItem(
-    task: Task,
-    onStatusChange: (Boolean) -> Unit,
-    onDeleteClick: () -> Unit,
+    task: TaskUiModel,
+    onStatusChange: (Long, Boolean) -> Unit,
+    onDeleteClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -48,7 +48,9 @@ fun TaskItem(
         ) {
             Checkbox(
                 checked = task.isCompleted,
-                onCheckedChange = onStatusChange
+                onCheckedChange = { isChecked ->
+                    onStatusChange(task.id, isChecked)
+                }
             )
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -63,7 +65,7 @@ fun TaskItem(
                 modifier = Modifier.weight(1f)
             )
 
-            IconButton(onClick = onDeleteClick) {
+            IconButton(onClick = { onDeleteClick(task.id) }) {
                 Icon(
                     imageVector = Icons.Default.DeleteOutline,
                     contentDescription = stringResource(R.string.delete_task),
