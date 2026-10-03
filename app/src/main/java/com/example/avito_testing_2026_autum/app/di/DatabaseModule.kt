@@ -12,7 +12,7 @@ val databaseModule = module {
             androidContext(),
             AppDatabase::class.java,
             "avito_database"
-        ).build()
+        ).fallbackToDestructiveMigration().build()
     }
 
     single { get<AppDatabase>().noteDao() }

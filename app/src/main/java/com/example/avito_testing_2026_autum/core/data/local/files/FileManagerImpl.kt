@@ -1,6 +1,7 @@
 package com.example.avito_testing_2026_autum.core.data.local.files
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.core.net.toUri
 import com.example.avito_testing_2026_autum.core.dispatchers.DispatchersProvider
@@ -8,6 +9,7 @@ import com.example.avito_testing_2026_autum.core.domain.manager.FileManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.UUID
 
@@ -25,9 +27,11 @@ class FileManagerImpl(
     override suspend fun copyImageToInternalStorage(uriString: String, prefix: String): String? {
         return withContext(dispatchers.io) {
             try {
-                val uri = uriString.toUri()
-                val inputStream =
-                    appContext.contentResolver.openInputStream(uri) ?: return@withContext null
+                val inputStream = if (uriString.startsWith("/")) {
+                    FileInputStream(File(uriString))
+                } else {
+                    appContext.contentResolver.openInputStream(uriString.toUri())
+                } ?: return@withContext null
 
                 val fileName = "${prefix}${System.currentTimeMillis()}_${UUID.randomUUID()}.jpg"
                 val filesDirectory = appContext.filesDir.apply { mkdirs() }
@@ -38,10 +42,10 @@ class FileManagerImpl(
                         input.copyTo(output)
                     }
                 }
-                destinationFile.absolutePath
-            } catch (e: CancellationException) {
-                throw e
+
+                Uri.fromFile(destinationFile).toString()
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Log.e("FileManagerImpl", "Failed to copy image to internal storage", e)
                 null
             }
