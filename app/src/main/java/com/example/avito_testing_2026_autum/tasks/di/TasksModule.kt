@@ -3,7 +3,7 @@ package com.example.avito_testing_2026_autum.tasks.di
 import com.example.avito_testing_2026_autum.tasks.data.repository.TaskRepositoryImpl
 import com.example.avito_testing_2026_autum.tasks.domain.repository.TaskRepository
 import com.example.avito_testing_2026_autum.tasks.domain.usecases.AddInlineTaskUseCase
-import com.example.avito_testing_2026_autum.tasks.domain.usecases.DeleteTaskUseCase
+import com.example.avito_testing_2026_autum.tasks.domain.usecases.DeleteTaskByIdUseCase
 import com.example.avito_testing_2026_autum.tasks.domain.usecases.GetTasksUseCase
 import com.example.avito_testing_2026_autum.tasks.domain.usecases.ToggleTaskStatusUseCase
 import com.example.avito_testing_2026_autum.tasks.presentation.TasksViewModel
@@ -18,9 +18,10 @@ val tasksModule = module {
     singleOf(::TaskRepositoryImpl).bind<TaskRepository>()
 
     factoryOf(::GetTasksUseCase)
-    factoryOf(::DeleteTaskUseCase)
     factoryOf(::AddInlineTaskUseCase)
     factoryOf(::ToggleTaskStatusUseCase)
+    factoryOf(::DeleteTaskByIdUseCase)
 
     viewModelOf(::TasksViewModel)
+
 }

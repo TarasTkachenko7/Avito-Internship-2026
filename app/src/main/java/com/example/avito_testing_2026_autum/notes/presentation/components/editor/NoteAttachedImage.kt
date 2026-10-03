@@ -1,8 +1,12 @@
 package com.example.avito_testing_2026_autum.notes.presentation.components.editor
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -37,12 +41,20 @@ fun NoteAttachedImage(
         )
         IconButton(
             onClick = onRemoveClick,
-            modifier = Modifier.align(Alignment.TopEnd)
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(8.dp)
+                .background(
+                    color = Color.Black.copy(alpha = 0.5f),
+                    shape = CircleShape,
+                )
+                .size(32.dp),
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = stringResource(R.string.delete_photo),
-                tint = Color.White
+                tint = Color.White,
+                modifier = Modifier.size(18.dp),
             )
         }
     }

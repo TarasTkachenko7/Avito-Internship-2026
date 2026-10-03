@@ -1,6 +1,7 @@
 package com.example.avito_testing_2026_autum.notes.presentation.components.editor
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
@@ -18,12 +19,14 @@ import com.example.avito_testing_2026_autum.R
 fun AttachmentDialog(
     onDismiss: () -> Unit,
     onGalleryClick: () -> Unit,
-    onCameraClick: () -> Unit
+    onCameraClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        modifier = modifier,
         title = {
-            Text(text = "Прикрепить фото")
+            Text(text = stringResource(R.string.add_photo))
         },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -35,7 +38,8 @@ fun AttachmentDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(imageVector = Icons.Default.CameraAlt, contentDescription = null)
-                    Text(text = "Сделать снимок", modifier = Modifier.weight(1f))
+                    Text(text = stringResource(R.string.create_photo))
+                    Spacer(modifier = Modifier.weight(1f))
                 }
 
                 TextButton(
@@ -46,15 +50,17 @@ fun AttachmentDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(imageVector = Icons.Default.PhotoLibrary, contentDescription = null)
-                    Text(text = "Выбрать из галереи", modifier = Modifier.weight(1f))
+                    Text(
+                        text = stringResource(R.string.choose_photo),
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         },
-        confirmButton = {},
-        dismissButton = {
+        confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text(text = stringResource(R.string.action_cancel))
             }
-        }
+        },
     )
 }

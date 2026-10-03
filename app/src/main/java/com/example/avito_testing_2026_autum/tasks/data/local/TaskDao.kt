@@ -8,29 +8,44 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TaskDao {
 
-    @Query("""
+    @Query(
+        """
         SELECT * FROM tasks 
         WHERE title LIKE '%' || :query || '%' 
         AND (:isCompletedFilter IS NULL OR isCompleted = :isCompletedFilter) 
-        ORDER BY isCompleted ASC, id DESC
-    """)
-    fun getTasksDesc(query: String = "", isCompletedFilter: Boolean? = null): Flow<List<TaskEntity>>
+        ORDER BY isCompleted ASC, createdAt DESC
+    """
+    )
+    fun getTasksDesc(query: String, isCompletedFilter: Boolean? = null): Flow<List<TaskEntity>>
 
-    @Query("""
+    @Query(
+        """
         SELECT * FROM tasks 
         WHERE title LIKE '%' || :query || '%' 
         AND (:isCompletedFilter IS NULL OR isCompleted = :isCompletedFilter) 
-        ORDER BY isCompleted ASC, id ASC
-    """)
-    fun getTasksAsc(query: String = "", isCompletedFilter: Boolean? = null): Flow<List<TaskEntity>>
+        ORDER BY isCompleted ASC, createdAt ASC
+    """
+    )
+    fun getTasksAsc(query: String, isCompletedFilter: Boolean? = null): Flow<List<TaskEntity>>
 
-    @Query("""
+    @Query(
+        """
         DELETE FROM tasks 
         WHERE id = :taskId
-        """)
+        """
+    )
     suspend fun deleteTaskById(taskId: Long)
 
     @Upsert
     suspend fun upsertTask(task: TaskEntity)
+
+    @Query(
+        """
+        UPDATE tasks 
+        SET isCompleted = :isCompleted 
+        WHERE id = :taskId
+        """
+    )
+    suspend fun updateTaskStatus(taskId: Long, isCompleted: Boolean)
 
 }

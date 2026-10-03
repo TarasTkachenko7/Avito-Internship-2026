@@ -1,4 +1,4 @@
-package com.example.avito_testing_2026_autum.core.data.local.database
+package com.example.avito_testing_2026_autum.app.local.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
@@ -12,10 +12,10 @@ import com.example.avito_testing_2026_autum.tasks.data.local.TaskEntity
         NoteEntity::class,
         TaskEntity::class
     ],
-    version = 1,
-    exportSchema = false
+    version = 2,
+    exportSchema = true
 )
-abstract class AppDatabase: RoomDatabase() {
-    abstract val noteDao: NoteDao
-    abstract val taskDao: TaskDao
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun noteDao(): NoteDao
+    abstract fun taskDao(): TaskDao
 }

@@ -1,4 +1,4 @@
-package com.example.avito_testing_2026_autum.core.navigation
+package com.example.avito_testing_2026_autum.app.navigation
 
 import kotlinx.serialization.Serializable
 
@@ -14,6 +14,6 @@ sealed interface Screen {
     data object Settings : Screen
 
     @Serializable
-    data class NoteEditor (val noteId: Long = -1L) : Screen
+    data class NoteEditor (val noteId: Long? = null) : Screen
 
 }

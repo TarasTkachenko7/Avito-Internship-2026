@@ -3,52 +3,73 @@ package com.example.avito_testing_2026_autum.notes.presentation.editor
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.avito_testing_2026_autum.R
+import com.example.avito_testing_2026_autum.notes.presentation.components.editor.AttachmentDialog
 import com.example.avito_testing_2026_autum.notes.presentation.components.editor.NoteAttachedImage
 import com.example.avito_testing_2026_autum.notes.presentation.components.editor.NoteEditorTopBar
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorEffect
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorEvent
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorUiState
 import org.koin.androidx.compose.koinViewModel
-import org.koin.core.parameter.parametersOf
-import com.example.avito_testing_2026_autum.R
-import com.example.avito_testing_2026_autum.core.utils.copyImageToInternalStorage
-import com.example.avito_testing_2026_autum.core.utils.createTempImageFile
-import com.example.avito_testing_2026_autum.notes.presentation.components.editor.AttachmentDialog
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import java.io.File
 
 @Composable
 fun NoteEditorScreenRoot(
-    noteId: Long,
+    modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit,
-    viewModel: NoteEditorViewModel = koinViewModel { parametersOf(noteId) }
+    viewModel: NoteEditorViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            if (success) {
+                viewModel.handleEvent(NoteEditorEvent.OnCameraCaptureSuccess)
+            }
+        }
+    )
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is NoteEditorEffect.NavigateBack -> onNavigateBack()
+                is NoteEditorEffect.LaunchCamera -> {
+                    val uri = FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        File(effect.uriString)
+                    )
+                    cameraLauncher.launch(uri)
+                }
             }
         }
     }
@@ -60,7 +81,8 @@ fun NoteEditorScreenRoot(
     } else {
         NoteEditorScreenContent(
             state = state,
-            onEvent = viewModel::handleEvent
+            onEvent = viewModel::handleEvent,
+            modifier = modifier,
         )
     }
 }
@@ -68,41 +90,20 @@ fun NoteEditorScreenRoot(
 @Composable
 private fun NoteEditorScreenContent(
     state: NoteEditorUiState,
-    onEvent: (NoteEditorEvent) -> Unit
+    onEvent: (NoteEditorEvent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    var tempImageUri by rememberSaveable { mutableStateOf<android.net.Uri?>(null) }
-
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture(),
-        onResult = { success ->
-            if (success && tempImageUri != null) {
-                coroutineScope.launch(Dispatchers.IO) {
-                    val permanentPath = context.copyImageToInternalStorage(tempImageUri!!)
-                    withContext(Dispatchers.Main) {
-                        onEvent(NoteEditorEvent.OnImageSelected(permanentPath))
-                    }
-                }
-            }
-        }
-    )
-
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             if (uri != null) {
-                coroutineScope.launch(Dispatchers.IO) {
-                    val permanentPath = context.copyImageToInternalStorage(uri)
-                    withContext(Dispatchers.Main) {
-                        onEvent(NoteEditorEvent.OnImageSelected(permanentPath))
-                    }
-                }
+                onEvent(NoteEditorEvent.OnImagePicked(uri.toString()))
             }
         }
     )
 
     Scaffold(
+        modifier = modifier,
         topBar = {
             NoteEditorTopBar(
                 isSaveButtonEnabled = state.isSaveButtonEnabled,
@@ -123,7 +124,7 @@ private fun NoteEditorScreenContent(
             if (state.imageUri != null) {
                 NoteAttachedImage(
                     imageUri = state.imageUri,
-                    onRemoveClick = { onEvent(NoteEditorEvent.OnImageSelected(null)) }
+                    onRemoveClick = { onEvent(NoteEditorEvent.OnRemoveImageClicked) },
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -132,7 +133,10 @@ private fun NoteEditorScreenContent(
                 value = state.title,
                 onValueChange = { onEvent(NoteEditorEvent.OnTitleChanged(it)) },
                 placeholder = {
-                    Text(stringResource(R.string.title), style = MaterialTheme.typography.headlineMedium)
+                    Text(
+                        stringResource(R.string.title),
+                        style = MaterialTheme.typography.headlineMedium
+                    )
                 },
                 textStyle = MaterialTheme.typography.headlineMedium,
                 singleLine = true,
@@ -140,9 +144,9 @@ private fun NoteEditorScreenContent(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
+                    unfocusedIndicatorColor = Color.Transparent,
                 ),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             TextField(
@@ -153,11 +157,11 @@ private fun NoteEditorScreenContent(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
+                    unfocusedIndicatorColor = Color.Transparent,
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .weight(1f),
             )
         }
     }
@@ -166,19 +170,11 @@ private fun NoteEditorScreenContent(
         AttachmentDialog(
             onDismiss = { onEvent(NoteEditorEvent.OnDismissAttachmentDialog) },
             onGalleryClick = {
+                onEvent(NoteEditorEvent.OnGalleryClicked)
                 photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             },
             onCameraClick = {
-                val tempFile = context.createTempImageFile()
-
-                val uri = androidx.core.content.FileProvider.getUriForFile(
-                    context,
-                    "${context.packageName}.fileprovider",
-                    tempFile
-                )
-
-                tempImageUri = uri
-                cameraLauncher.launch(uri)
+                onEvent(NoteEditorEvent.OnCameraClicked)
             }
         )
     }

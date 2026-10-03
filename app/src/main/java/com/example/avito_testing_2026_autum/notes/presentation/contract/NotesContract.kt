@@ -1,25 +1,20 @@
 package com.example.avito_testing_2026_autum.notes.presentation.contract
 
-import com.example.avito_testing_2026_autum.core.presentation.UiEffect
-import com.example.avito_testing_2026_autum.core.presentation.UiEvent
-import com.example.avito_testing_2026_autum.core.presentation.UiState
-import com.example.avito_testing_2026_autum.notes.domain.model.Note
-
-enum class SortType {
-    DATE_DESC,
-    DATE_ASC
-}
+import com.example.avito_testing_2026_autum.notes.domain.model.NoteSortOrder
+import com.example.avito_testing_2026_autum.notes.presentation.models.NoteUiModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 data class NotesUiState (
     val isLoading: Boolean = true,
-    val notes: List<Note> = emptyList(),
+    val notes: ImmutableList<NoteUiModel> = persistentListOf(),
     val searchQuery: String = "",
     val isDeleteModeActive: Boolean = false,
-    val sortType: SortType = SortType.DATE_DESC,
+    val sortOrder: NoteSortOrder = NoteSortOrder.DATE_DESC,
     val noteIdToDelete: Long? = null
-): UiState
+)
 
-sealed interface NotesEvent : UiEvent {
+sealed interface NotesEvent {
     data object OnCreateNoteClicked : NotesEvent
     data object OnToggleDeleteMode : NotesEvent
     data class OnNoteClicked(val noteId: Long) : NotesEvent
@@ -27,9 +22,9 @@ sealed interface NotesEvent : UiEvent {
     data object OnConfirmDelete : NotesEvent
     data object OnDismissDeleteDialog : NotesEvent
     data class OnSearchQueryChanged(val query: String) : NotesEvent
-    data class OnSortClicked(val sortType: SortType) : NotesEvent
+    data class OnSortClicked(val sortOrder: NoteSortOrder) : NotesEvent
 }
 
-sealed interface NotesEffect : UiEffect {
-    data class NavigateToEditor(val noteId: Long) : NotesEffect
+sealed interface NotesEffect {
+    data class NavigateToEditor(val noteId: Long? = null) : NotesEffect
 }

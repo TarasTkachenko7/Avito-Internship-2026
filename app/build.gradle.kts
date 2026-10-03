@@ -35,6 +35,10 @@ android {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     // AndroidX & Lifecycle
     implementation(libs.androidx.core.ktx)
@@ -88,5 +92,8 @@ dependencies {
     testImplementation(libs.mockk)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // Immutable
+    implementation(libs.kotlinx.collections.immutable)
 
 }

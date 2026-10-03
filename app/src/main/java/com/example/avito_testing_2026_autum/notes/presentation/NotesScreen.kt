@@ -23,20 +23,21 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.avito_testing_2026_autum.R
 import com.example.avito_testing_2026_autum.notes.presentation.components.DeleteConfirmationDialog
 import com.example.avito_testing_2026_autum.notes.presentation.components.NoteItem
 import com.example.avito_testing_2026_autum.notes.presentation.components.NotesTopBar
 import com.example.avito_testing_2026_autum.notes.presentation.contract.NotesEffect
 import com.example.avito_testing_2026_autum.notes.presentation.contract.NotesEvent
 import com.example.avito_testing_2026_autum.notes.presentation.contract.NotesUiState
+import com.example.avito_testing_2026_autum.notes.presentation.models.NoteUiModel
+import kotlinx.collections.immutable.ImmutableList
 import org.koin.androidx.compose.koinViewModel
-import com.example.avito_testing_2026_autum.R
-import com.example.avito_testing_2026_autum.notes.domain.model.Note
 
 @Composable
 fun NotesScreenRoot(
     viewModel: NotesViewModel = koinViewModel(),
-    onNavigateToEditor: (Long) -> Unit
+    onNavigateToEditor: (Long?) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -72,7 +73,10 @@ private fun NotesScreenContent(
         floatingActionButton = {
             if (!state.isDeleteModeActive) {
                 FloatingActionButton(onClick = { onEvent(NotesEvent.OnCreateNoteClicked) }) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = stringResource(R.string.create_note))
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = stringResource(R.string.create_note)
+                    )
                 }
             }
         }
@@ -86,12 +90,14 @@ private fun NotesScreenContent(
                 state.isLoading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
+
                 state.notes.isEmpty() -> {
                     EmptyNotesState(
                         searchQuery = state.searchQuery,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
+
                 else -> {
                     NotesList(
                         notes = state.notes,
@@ -113,7 +119,7 @@ private fun NotesScreenContent(
 
 @Composable
 private fun NotesList(
-    notes: List<Note>,
+    notes: ImmutableList<NoteUiModel>,
     isDeleteModeActive: Boolean,
     onEvent: (NotesEvent) -> Unit,
     modifier: Modifier = Modifier
