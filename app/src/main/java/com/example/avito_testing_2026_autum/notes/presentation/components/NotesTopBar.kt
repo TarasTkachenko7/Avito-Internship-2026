@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
@@ -28,7 +30,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.example.avito_testing_2026_autum.R
 import com.example.avito_testing_2026_autum.notes.domain.model.NoteSortOrder
@@ -38,10 +42,13 @@ fun NotesTopBar(
     searchQuery: String,
     isDeleteModeActive: Boolean,
     onSearchQueryChange: (String) -> Unit,
+    onAppliedSearchQueryChanged: () -> Unit,
     onSortSelect: (NoteSortOrder) -> Unit,
     onToggleDeleteMode: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -61,7 +68,10 @@ fun NotesTopBar(
             },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { onSearchQueryChange("") }) {
+                    IconButton(onClick = {
+                        onSearchQueryChange("")
+                        onAppliedSearchQueryChanged()
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = stringResource(R.string.clear),
@@ -77,6 +87,15 @@ fun NotesTopBar(
                 focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                 unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             ),
+            keyboardOptions = KeyboardOptions (
+                imeAction = ImeAction.Search
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    onAppliedSearchQueryChanged()
+                    keyboardController?.hide()
+                }
+            )
         )
 
         Spacer(modifier = Modifier.width(4.dp))

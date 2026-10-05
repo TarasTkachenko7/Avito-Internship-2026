@@ -9,6 +9,7 @@ data class NotesUiState (
     val isLoading: Boolean = true,
     val notes: ImmutableList<NoteUiModel> = persistentListOf(),
     val searchQuery: String = "",
+    val appliedSearchQuery: String = "",
     val isDeleteModeActive: Boolean = false,
     val sortOrder: NoteSortOrder = NoteSortOrder.DATE_DESC,
     val noteIdToDelete: Long? = null
@@ -22,6 +23,7 @@ sealed interface NotesEvent {
     data object OnConfirmDelete : NotesEvent
     data object OnDismissDeleteDialog : NotesEvent
     data class OnSearchQueryChanged(val query: String) : NotesEvent
+    data object OnSearchClicked : NotesEvent
     data class OnSortClicked(val sortOrder: NoteSortOrder) : NotesEvent
 }
 
