@@ -57,7 +57,7 @@ fun GigaChatBalanceCard(
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Text(
-                                text = balanceState.balance,
+                                text = balanceState.balanceText.asString(),
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -68,7 +68,7 @@ fun GigaChatBalanceCard(
                     is GigaChatBalanceState.Error -> {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = balanceState.message,
+                                text = balanceState.message.asString(),
                                 color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.bodyMedium
                             )

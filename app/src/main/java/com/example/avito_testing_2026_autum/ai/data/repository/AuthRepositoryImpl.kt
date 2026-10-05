@@ -1,7 +1,7 @@
 package com.example.avito_testing_2026_autum.ai.data.repository
 
 import com.example.avito_testing_2026_autum.ai.data.network.api.GigaChatAuthApi
-import com.example.avito_testing_2026_autum.ai.domain.AuthRepository
+import com.example.avito_testing_2026_autum.ai.domain.repository.AuthRepository
 import com.example.avito_testing_2026_autum.core.dispatchers.DispatchersProvider
 import kotlinx.coroutines.withContext
 import java.util.UUID

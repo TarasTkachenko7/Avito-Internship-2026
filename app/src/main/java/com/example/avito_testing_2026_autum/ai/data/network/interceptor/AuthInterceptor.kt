@@ -1,7 +1,7 @@
 package com.example.avito_testing_2026_autum.ai.data.network.interceptor
 
 
-import com.example.avito_testing_2026_autum.ai.domain.AuthRepository
+import com.example.avito_testing_2026_autum.ai.domain.repository.AuthRepository
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response

@@ -4,12 +4,16 @@ import com.example.avito_testing_2026_autum.BuildConfig
 import com.example.avito_testing_2026_autum.ai.data.network.api.GigaChatApi
 import com.example.avito_testing_2026_autum.ai.data.network.api.GigaChatAuthApi
 import com.example.avito_testing_2026_autum.ai.data.network.interceptor.AuthInterceptor
+import com.example.avito_testing_2026_autum.ai.data.repository.AiRepositoryImpl
 import com.example.avito_testing_2026_autum.ai.data.repository.AuthRepositoryImpl
-import com.example.avito_testing_2026_autum.ai.domain.AuthRepository
+import com.example.avito_testing_2026_autum.ai.domain.repository.AiRepository
+import com.example.avito_testing_2026_autum.ai.domain.repository.AuthRepository
+import com.example.avito_testing_2026_autum.ai.domain.usecases.GetGigaChatBalanceUseCase
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import retrofit2.Retrofit
@@ -92,4 +96,14 @@ val aiNetworkModule = module {
     single<GigaChatApi> {
         get<Retrofit>(named("apiRetrofit")).create(GigaChatApi::class.java)
     }
+
+    single<AiRepository> {
+        AiRepositoryImpl(
+            api = get(),
+            dispatchers = get()
+        )
+    }
+
+    factoryOf(::GetGigaChatBalanceUseCase)
+
 }
