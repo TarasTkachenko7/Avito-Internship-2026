@@ -9,8 +9,10 @@ import com.example.avito_testing_2026_autum.notes.presentation.contract.NotesEff
 import com.example.avito_testing_2026_autum.notes.presentation.contract.NotesEvent
 import com.example.avito_testing_2026_autum.notes.presentation.contract.NotesUiState
 import com.example.avito_testing_2026_autum.notes.presentation.mapper.toUiModel
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +20,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -32,7 +36,10 @@ class NotesViewModel(
     private val _state = MutableStateFlow(NotesUiState())
     val state: StateFlow<NotesUiState> = _state.asStateFlow()
 
-    private val _effect = Channel<NotesEffect>(Channel.BUFFERED)
+    private val _effect = Channel<NotesEffect>(
+        capacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_LATEST
+    )
     val effect = _effect.receiveAsFlow()
 
     init {
@@ -40,30 +47,33 @@ class NotesViewModel(
     }
 
     private fun observeNotes() {
-        viewModelScope.launch {
-            state
-                .map { it.searchQuery to it.sortOrder }
-                .distinctUntilChanged()
-                .flatMapLatest { (query, sortOrder) ->
-                    getNotesUseCase(query, sortOrder)
-                }
-                .map { domainNotes ->
-                    domainNotes.map { it.toUiModel() }.toPersistentList()
-                }
-                .catch { exception ->
-                    Log.e("NotesViewModel", "Failed to observe notes", exception)
-                    _state.update { it.copy(isLoading = false) }
-                }
-                .collect { notesList ->
-                    _state.update { it.copy(notes = notesList, isLoading = false) }
-                }
-        }
+        state
+            .map { it.appliedSearchQuery to it.sortOrder }
+            .distinctUntilChanged()
+            .flatMapLatest { (query, sortOrder) ->
+                getNotesUseCase(query, sortOrder)
+                    .map { domainNotes ->
+                        domainNotes.map { it.toUiModel() }.toPersistentList()
+                    }
+                    .catch { exception ->
+                        Log.e("NotesViewModel", "Failed to observe notes", exception)
+                        emit(persistentListOf())
+                    }
+            }
+            .onEach { notesList ->
+                _state.update { it.copy(notes = notesList, isLoading = false) }
+            }
+            .launchIn(viewModelScope)
     }
 
     fun handleEvent(event: NotesEvent) {
         when (event) {
             is NotesEvent.OnSearchQueryChanged -> {
                 _state.update { it.copy(searchQuery = event.query) }
+            }
+
+            is NotesEvent.OnSearchClicked -> {
+                _state.update { it.copy(appliedSearchQuery = it.searchQuery) }
             }
 
             is NotesEvent.OnSortClicked -> {

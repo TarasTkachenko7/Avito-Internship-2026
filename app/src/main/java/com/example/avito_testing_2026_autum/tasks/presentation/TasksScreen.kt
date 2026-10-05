@@ -104,6 +104,7 @@ private fun TasksScreenContent(
             TasksTopBar(
                 searchQuery = state.searchQuery,
                 onSearchQueryChange = { onEvent(TasksEvent.OnSearchQueryChanged(it)) },
+                onAppliedSearchQueryChanged = { onEvent(TasksEvent.OnSearchClicked) },
                 onSortSelect = { onEvent(TasksEvent.OnSortClicked(it)) }
             )
         },

@@ -13,6 +13,7 @@ import com.example.avito_testing_2026_autum.settings.presentation.contract.GigaC
 import com.example.avito_testing_2026_autum.settings.presentation.contract.SettingsEffect
 import com.example.avito_testing_2026_autum.settings.presentation.contract.SettingsEvent
 import com.example.avito_testing_2026_autum.settings.presentation.contract.SettingsUiState
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +35,11 @@ class SettingsViewModel(
     private val _state = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
 
-    private val _effect = Channel<SettingsEffect>(Channel.BUFFERED)
+    private val _effect = Channel<SettingsEffect>(
+        capacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_LATEST
+    )
+
     val effect = _effect.receiveAsFlow()
 
     init {

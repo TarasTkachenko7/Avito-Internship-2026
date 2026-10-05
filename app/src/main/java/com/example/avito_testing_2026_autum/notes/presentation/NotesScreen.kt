@@ -66,6 +66,7 @@ private fun NotesScreenContent(
                 searchQuery = state.searchQuery,
                 isDeleteModeActive = state.isDeleteModeActive,
                 onSearchQueryChange = { onEvent(NotesEvent.OnSearchQueryChanged(it)) },
+                onAppliedSearchQueryChanged = { onEvent(NotesEvent.OnSearchClicked) },
                 onSortSelect = { onEvent(NotesEvent.OnSortClicked(it)) },
                 onToggleDeleteMode = { onEvent(NotesEvent.OnToggleDeleteMode) }
             )

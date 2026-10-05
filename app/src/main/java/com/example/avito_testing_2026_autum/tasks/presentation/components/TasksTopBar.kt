@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
@@ -26,7 +28,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.example.avito_testing_2026_autum.R
 import com.example.avito_testing_2026_autum.tasks.domain.model.TaskSortOrder
@@ -35,10 +39,13 @@ import com.example.avito_testing_2026_autum.tasks.domain.model.TaskSortOrder
 fun TasksTopBar(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
+    onAppliedSearchQueryChanged: () -> Unit,
     onSortSelect: (TaskSortOrder) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isSortMenuExpanded by rememberSaveable { mutableStateOf(false) }
+
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     Row(
         modifier = modifier
@@ -59,7 +66,10 @@ fun TasksTopBar(
             },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { onSearchQueryChange("") }) {
+                    IconButton(onClick = {
+                        onSearchQueryChange("")
+                        onAppliedSearchQueryChanged()
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = stringResource(R.string.clear)
@@ -72,6 +82,15 @@ fun TasksTopBar(
             colors = TextFieldDefaults.colors(
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent
+            ),
+            keyboardOptions = KeyboardOptions (
+                imeAction = ImeAction.Search
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    onAppliedSearchQueryChanged()
+                    keyboardController?.hide()
+                }
             )
         )
 

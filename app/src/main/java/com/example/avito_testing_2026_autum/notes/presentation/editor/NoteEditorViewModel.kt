@@ -13,6 +13,7 @@ import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.UpsertN
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorEffect
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorEvent
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorUiState
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +35,11 @@ class NoteEditorViewModel(
     private val _state = MutableStateFlow(NoteEditorUiState())
     val state: StateFlow<NoteEditorUiState> = _state.asStateFlow()
 
-    private val _effect = Channel<NoteEditorEffect>(Channel.BUFFERED)
+    private val _effect = Channel<NoteEditorEffect>(
+        capacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_LATEST
+    )
+
     val effect = _effect.receiveAsFlow()
 
     private var originalCreatedAt: Long = 0L
