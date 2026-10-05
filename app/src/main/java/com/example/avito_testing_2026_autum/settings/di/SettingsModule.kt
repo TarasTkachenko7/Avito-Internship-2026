@@ -1,5 +1,6 @@
 package com.example.avito_testing_2026_autum.settings.di
 
+import com.example.avito_testing_2026_autum.ai.domain.usecases.GetGigaChatBalanceUseCase
 import com.example.avito_testing_2026_autum.settings.data.local.provideSettingsDataStore
 import com.example.avito_testing_2026_autum.settings.data.repository.SettingsRepositoryImpl
 import com.example.avito_testing_2026_autum.settings.domain.repository.SettingsRepository
@@ -24,6 +25,7 @@ val settingsModule = module {
     factoryOf(::GetAccentColorUseCase)
     factoryOf(::SetThemeModeUseCase)
     factoryOf(::SetAccentColorUseCase)
+    factoryOf(::GetGigaChatBalanceUseCase)
 
     viewModelOf(::SettingsViewModel)
 

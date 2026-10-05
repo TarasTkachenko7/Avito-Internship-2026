@@ -43,5 +43,8 @@
     <string name="theme_system">Системная тема</string>
     <string name="theme_light">Светлая тема</string>
     <string name="theme_dark">Тёмная тема</string>
+    <string name="balance_pay_as_you_go">Pay-as-you-go</string>
+    <string name="error_loading_balance">Не удалось загрузить баланс</string>
+    <string name="error_network_connection">Отсутствует подключение к интернету</string>
 
 </resources>

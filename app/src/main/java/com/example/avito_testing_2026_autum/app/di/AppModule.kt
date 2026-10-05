@@ -1,6 +1,6 @@
 package com.example.avito_testing_2026_autum.app.di
 
-import com.example.avito_testing_2026_autum.ai.di.aiModule
+import com.example.avito_testing_2026_autum.ai.di.aiNetworkModule
 import com.example.avito_testing_2026_autum.core.di.coreModule
 import com.example.avito_testing_2026_autum.notes.di.notesModule
 import com.example.avito_testing_2026_autum.settings.di.settingsModule
@@ -11,7 +11,7 @@ val appModule = module {
     includes(
         coreModule,
         databaseModule,
-        aiModule,
+        aiNetworkModule,
         notesModule,
         settingsModule,
         tasksModule

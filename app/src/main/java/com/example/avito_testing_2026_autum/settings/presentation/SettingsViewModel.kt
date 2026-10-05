@@ -3,6 +3,8 @@ package com.example.avito_testing_2026_autum.settings.presentation
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.avito_testing_2026_autum.ai.domain.usecases.GetGigaChatBalanceUseCase
+import com.example.avito_testing_2026_autum.core.utils.UiText
 import com.example.avito_testing_2026_autum.settings.domain.model.AccentColor
 import com.example.avito_testing_2026_autum.settings.domain.model.ThemeMode
 import com.example.avito_testing_2026_autum.settings.domain.usecases.GetAccentColorUseCase
@@ -24,12 +26,14 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.avito_testing_2026_autum.R
 
 class SettingsViewModel(
     private val getThemeModeUseCase: GetThemeModeUseCase,
     private val getAccentColorUseCase: GetAccentColorUseCase,
     private val setThemeModeUseCase: SetThemeModeUseCase,
-    private val setAccentColorUseCase: SetAccentColorUseCase
+    private val setAccentColorUseCase: SetAccentColorUseCase,
+    private val getBalanceUseCase: GetGigaChatBalanceUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsUiState())
@@ -67,15 +71,31 @@ class SettingsViewModel(
     private fun loadBalance() {
         viewModelScope.launch {
             _state.update { it.copy(balanceState = GigaChatBalanceState.Loading) }
-            try {
-                delay(1000)
-                _state.update { it.copy(balanceState = GigaChatBalanceState.Success("150 000")) }
-            } catch (e: Exception) {
-                Log.e("SettingsViewModel", "Failed to load balance", e)
-                _state.update {
-                    it.copy(balanceState = GigaChatBalanceState.Error("Ошибка загрузки баланса"))
+
+            getBalanceUseCase()
+                .onSuccess { tokens ->
+                    val balanceText = if (tokens != null) {
+                        UiText.DynamicString("%,d".format(tokens).replace(',', ' '))
+                    } else {
+                        UiText.StringResource(R.string.balance_pay_as_you_go)
+                    }
+                    _state.update {
+                        it.copy(balanceState = GigaChatBalanceState.Success(balanceText))
+                    }
                 }
-            }
+                .onFailure { error ->
+                    Log.e("SettingsViewModel", "Failed to load GigaChat balance", error)
+
+                    val errorMessage = if (error is java.io.IOException) {
+                        UiText.StringResource(R.string.error_network_connection)
+                    } else {
+                        UiText.StringResource(R.string.error_loading_balance)
+                    }
+
+                    _state.update {
+                        it.copy(balanceState = GigaChatBalanceState.Error(errorMessage))
+                    }
+                }
         }
     }
 
