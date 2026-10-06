@@ -7,4 +7,5 @@ interface GigaChatApi {
 
     @GET("v1/balance")
     suspend fun getBalance(): BalanceResponseDto
+
 }
