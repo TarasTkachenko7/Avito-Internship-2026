@@ -3,6 +3,7 @@ package com.example.avito_testing_2026_autum.notes.presentation.components.edito
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -21,6 +22,7 @@ fun NoteEditorTopBar(
     onBackClick: () -> Unit,
     onSaveClick: () -> Unit,
     onAddImageClick: () -> Unit,
+    onVoiceInputClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     TopAppBar(
@@ -34,6 +36,12 @@ fun NoteEditorTopBar(
             }
         },
         actions = {
+            IconButton(onClick = onVoiceInputClick) {
+                Icon(
+                    imageVector = Icons.Default.Mic,
+                    contentDescription = stringResource(R.string.voice_input_title)
+                )
+            }
             IconButton(onClick = onAddImageClick) {
                 Icon(
                     imageVector = Icons.Default.Image,

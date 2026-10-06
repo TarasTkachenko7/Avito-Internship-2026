@@ -1,5 +1,7 @@
 package com.example.avito_testing_2026_autum.notes.presentation.editor
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.avito_testing_2026_autum.R
@@ -37,6 +40,7 @@ import com.example.avito_testing_2026_autum.notes.presentation.components.editor
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorEffect
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorEvent
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorUiState
+import com.example.avito_testing_2026_autum.voice.presentation.components.VoiceInputDialog
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
 
@@ -58,6 +62,17 @@ fun NoteEditorScreenRoot(
         }
     )
 
+    // Лаунчер для микрофона
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            viewModel.handleEvent(NoteEditorEvent.OnVoiceInputClicked)
+        } else {
+            viewModel.handleEvent(NoteEditorEvent.OnPermissionDenied)
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
@@ -69,6 +84,12 @@ fun NoteEditorScreenRoot(
                         File(effect.uriString)
                     )
                     cameraLauncher.launch(uri)
+                }
+                is NoteEditorEffect.RequestMicrophonePermission -> {
+                    permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                }
+                is NoteEditorEffect.ShowMessage -> {
+                    // Если используешь Snackbar или тост для ошибок
                 }
             }
         }
@@ -82,6 +103,18 @@ fun NoteEditorScreenRoot(
         NoteEditorScreenContent(
             state = state,
             onEvent = viewModel::handleEvent,
+            onVoiceClick = {
+                val hasPermission = ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.RECORD_AUDIO
+                ) == PackageManager.PERMISSION_GRANTED
+
+                if (hasPermission) {
+                    viewModel.handleEvent(NoteEditorEvent.OnVoiceInputClicked)
+                } else {
+                    permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                }
+            },
             modifier = modifier,
         )
     }
@@ -91,6 +124,7 @@ fun NoteEditorScreenRoot(
 private fun NoteEditorScreenContent(
     state: NoteEditorUiState,
     onEvent: (NoteEditorEvent) -> Unit,
+    onVoiceClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val photoPickerLauncher = rememberLauncherForActivityResult(
@@ -109,7 +143,8 @@ private fun NoteEditorScreenContent(
                 isSaveButtonEnabled = state.isSaveButtonEnabled,
                 onBackClick = { onEvent(NoteEditorEvent.OnBackClicked) },
                 onSaveClick = { onEvent(NoteEditorEvent.OnSaveClicked) },
-                onAddImageClick = { onEvent(NoteEditorEvent.OnAttachmentClicked) }
+                onAddImageClick = { onEvent(NoteEditorEvent.OnAttachmentClicked) },
+                onVoiceInputClick = onVoiceClick // <-- Передаем клик в TopBar
             )
         }
     ) { paddingValues ->
@@ -176,6 +211,15 @@ private fun NoteEditorScreenContent(
             onCameraClick = {
                 onEvent(NoteEditorEvent.OnCameraClicked)
             }
+        )
+    }
+
+    // Голосовой диалог
+    if (state.showVoiceDialog) {
+        VoiceInputDialog(
+            voiceState = state.voiceState,
+            onStopListening = { onEvent(NoteEditorEvent.OnStopVoiceListening) },
+            onDismiss = { onEvent(NoteEditorEvent.OnDismissVoiceDialog) }
         )
     }
 }

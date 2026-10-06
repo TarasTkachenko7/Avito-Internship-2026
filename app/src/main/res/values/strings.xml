@@ -46,5 +46,14 @@
     <string name="balance_pay_as_you_go">Pay-as-you-go</string>
     <string name="error_loading_balance">Не удалось загрузить баланс</string>
     <string name="error_network_connection">Отсутствует подключение к интернету</string>
+    <string name="voice_input_title">Голосовой ввод</string>
+    <string name="voice_listening_hint">Говорите, микрофон слушает…</string>
+    <string name="voice_processing_hint">Распознавание речи…</string>
+    <string name="voice_error_permission_denied">Требуется разрешение на запись звука</string>
+    <string name="voice_error_recording_failed">Сбой записи звука</string>
+    <string name="voice_error_network">Ошибка сети при распознавании</string>
+    <string name="voice_error_no_speech">Речь не распознана. Попробуйте еще раз</string>
+    <string name="voice_error_unknown">Произошла ошибка распознавания</string>
+    <string name="action_done">Готово!</string>
 
 </resources>
