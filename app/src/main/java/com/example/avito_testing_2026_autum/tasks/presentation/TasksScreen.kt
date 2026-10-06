@@ -51,6 +51,24 @@ import com.example.avito_testing_2026_autum.tasks.presentation.contract.TasksEff
 import com.example.avito_testing_2026_autum.tasks.presentation.contract.TasksEvent
 import com.example.avito_testing_2026_autum.tasks.presentation.contract.TasksUiState
 import org.koin.androidx.compose.koinViewModel
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.example.avito_testing_2026_autum.voice.presentation.components.VoiceInputDialog
+
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun TasksScreenRoot(
@@ -62,6 +80,20 @@ fun TasksScreenRoot(
     val keyboardController = LocalSoftwareKeyboardController.current
     val listState = rememberLazyListState()
     val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+
+    // Добавляем стейт для Snackbar
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            viewModel.handleEvent(TasksEvent.OnVoiceTaskClicked)
+        } else {
+            viewModel.handleEvent(TasksEvent.OnPermissionDenied)
+        }
+    }
 
     LaunchedEffect(viewModel.effect, lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -71,13 +103,12 @@ fun TasksScreenRoot(
                         focusRequester.requestFocus()
                         keyboardController?.show()
                     }
-
                     is TasksEffect.ScrollToTop -> {
                         listState.animateScrollToItem(0)
                     }
-
                     is TasksEffect.ShowError -> {
-
+                        // Показываем ошибку пользователю
+                        snackbarHostState.showSnackbar(effect.message)
                     }
                 }
             }
@@ -88,7 +119,21 @@ fun TasksScreenRoot(
         state = state,
         listState = listState,
         focusRequester = focusRequester,
-        onEvent = viewModel::handleEvent
+        snackbarHostState = snackbarHostState, // Передаем стейт
+        onEvent = viewModel::handleEvent,
+        onVoiceRequest = {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (hasPermission) {
+                viewModel.handleEvent(TasksEvent.OnVoiceTaskClicked)
+            } else {
+                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            }
+        },
+        modifier = modifier
     )
 }
 
@@ -97,9 +142,13 @@ private fun TasksScreenContent(
     state: TasksUiState,
     listState: LazyListState,
     focusRequester: FocusRequester,
-    onEvent: (TasksEvent) -> Unit
+    snackbarHostState: SnackbarHostState, // Принимаем стейт
+    onEvent: (TasksEvent) -> Unit,
+    onVoiceRequest: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }, // Подключаем Snackbar к Scaffold
         topBar = {
             TasksTopBar(
                 searchQuery = state.searchQuery,
@@ -110,7 +159,7 @@ private fun TasksScreenContent(
         },
         floatingActionButton = {
             if (!state.isCreatingTask) {
-                FloatingActionButton(onClick = { onEvent(TasksEvent.OnAddNewTaskClicked) }) {
+                FloatingActionButton(onClick = { onEvent(TasksEvent.OnFabClicked) }) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = stringResource(R.string.add_task)
@@ -119,6 +168,7 @@ private fun TasksScreenContent(
             }
         }
     ) { paddingValues ->
+        // ... (TasksList оставляем без изменений)
         TasksList(
             state = state,
             listState = listState,
@@ -126,6 +176,51 @@ private fun TasksScreenContent(
             onEvent = onEvent,
             modifier = Modifier.padding(paddingValues)
         )
+    }
+
+    // Диалог выбора способа создания задачи
+    if (state.showCreateOptions) {
+        AlertDialog(
+            onDismissRequest = { onEvent(TasksEvent.OnDismissCreateOptions) },
+            title = { Text("Создать задачу") },
+            text = { Text("Выберите способ создания новой задачи.") },
+            confirmButton = {
+                TextButton(onClick = onVoiceRequest) {
+                    Text("Голосом (GigaChat)")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onEvent(TasksEvent.OnTextTaskClicked) }) {
+                    Text("Текстом")
+                }
+            }
+        )
+    }
+
+    // Диалог записи голоса
+    if (state.showVoiceDialog) {
+        VoiceInputDialog(
+            voiceState = state.voiceState,
+            onStopListening = { onEvent(TasksEvent.OnStopVoiceListening) },
+            onDismiss = { onEvent(TasksEvent.OnDismissVoiceDialog) }
+        )
+    }
+
+    // Блокирующий лоадер при работе GigaChat
+    if (state.isAiProcessing) {
+        Dialog(
+            onDismissRequest = { },
+            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(100.dp)
+                    .background(MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.medium)
+            ) {
+                CircularProgressIndicator()
+            }
+        }
     }
 }
 

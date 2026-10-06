@@ -8,6 +8,7 @@ import com.example.avito_testing_2026_autum.ai.data.repository.AiRepositoryImpl
 import com.example.avito_testing_2026_autum.ai.data.repository.AuthRepositoryImpl
 import com.example.avito_testing_2026_autum.ai.domain.repository.AiRepository
 import com.example.avito_testing_2026_autum.ai.domain.repository.AuthRepository
+import com.example.avito_testing_2026_autum.ai.domain.usecases.FormulateTaskUseCase
 import com.example.avito_testing_2026_autum.ai.domain.usecases.GetGigaChatBalanceUseCase
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -105,5 +106,6 @@ val aiNetworkModule = module {
     }
 
     factoryOf(::GetGigaChatBalanceUseCase)
+    factoryOf(::FormulateTaskUseCase)
 
 }

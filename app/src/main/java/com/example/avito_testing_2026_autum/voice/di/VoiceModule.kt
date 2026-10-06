@@ -6,7 +6,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val voiceModule = module {
-    single<SpeechRecognizerContract> {
+    factory<SpeechRecognizerContract> {
         AndroidSpeechRecognizer(
             context = androidContext(),
             dispatchers = get()
