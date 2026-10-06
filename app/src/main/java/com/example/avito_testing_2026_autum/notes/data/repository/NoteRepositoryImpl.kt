@@ -10,17 +10,20 @@ import com.example.avito_testing_2026_autum.notes.domain.repository.NoteReposito
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
 
 class NoteRepositoryImpl(
     private val dao: NoteDao,
     private val dispatchers: DispatchersProvider
 ) : NoteRepository {
 
-    override fun getNotes(query: String, sortOrder: NoteSortOrder): Flow<List<Note>> {
+    override fun getNotes(
+        query: String,
+        sortOrder: NoteSortOrder
+    ): Flow<List<Note>> {
+        val sanitizedQuery = query.trim()
         val entitiesFlow = when (sortOrder) {
-            NoteSortOrder.DATE_DESC -> dao.getNotesDesc(query)
-            NoteSortOrder.DATE_ASC -> dao.getNotesAsc(query)
+            NoteSortOrder.DATE_DESC -> dao.getNotesDesc(sanitizedQuery)
+            NoteSortOrder.DATE_ASC -> dao.getNotesAsc(sanitizedQuery)
         }
 
         return entitiesFlow

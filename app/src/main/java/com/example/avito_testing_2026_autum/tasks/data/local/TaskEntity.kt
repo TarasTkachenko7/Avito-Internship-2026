@@ -7,13 +7,12 @@ import androidx.room.PrimaryKey
 @Entity(
     tableName = "tasks",
     indices = [
-        Index(value = ["isCompleted"]),
-        Index(value = ["createdAt"])
+        Index(value = ["isCompleted", "createdAt"])
     ]
 )
 data class TaskEntity(
     @PrimaryKey(autoGenerate = true)
-    val id: Long,
+    val id: Long = 0L,
     val title: String,
     val isCompleted: Boolean,
     val createdAt: Long

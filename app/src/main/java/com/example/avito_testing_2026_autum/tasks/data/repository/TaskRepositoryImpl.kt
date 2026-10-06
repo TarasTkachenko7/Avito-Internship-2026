@@ -22,24 +22,25 @@ class TaskRepositoryImpl(
         sortOrder: TaskSortOrder,
         isCompletedFilter: Boolean?
     ): Flow<List<Task>> {
+        val sanitizedQuery = query.trim()
         val entitiesFlow = when (sortOrder) {
-            TaskSortOrder.DATE_DESC -> dao.getTasksDesc(query, isCompletedFilter)
-            TaskSortOrder.DATE_ASC -> dao.getTasksAsc(query, isCompletedFilter)
+            TaskSortOrder.DATE_DESC -> dao.getTasksDesc(sanitizedQuery, isCompletedFilter)
+            TaskSortOrder.DATE_ASC -> dao.getTasksAsc(sanitizedQuery, isCompletedFilter)
         }
         return entitiesFlow
             .map { list -> list.map { it.toDomain() } }
             .flowOn(dispatchers.io)
     }
 
-    override suspend fun deleteTaskById(id: Long) = withContext(dispatchers.io) {
+    override suspend fun deleteTaskById(id: Long) {
         dao.deleteTaskById(id)
     }
 
-    override suspend fun upsertTask(task: Task) = withContext(dispatchers.io) {
+    override suspend fun upsertTask(task: Task) {
         dao.upsertTask(task.toEntity())
     }
 
-    override suspend fun updateTaskStatus(taskId: Long, isCompleted: Boolean) = withContext(dispatchers.io) {
+    override suspend fun updateTaskStatus(taskId: Long, isCompleted: Boolean) {
         dao.updateTaskStatus(taskId, isCompleted)
     }
 

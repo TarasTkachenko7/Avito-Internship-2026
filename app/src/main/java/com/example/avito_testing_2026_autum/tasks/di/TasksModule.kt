@@ -14,7 +14,6 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val tasksModule = module {
-
     singleOf(::TaskRepositoryImpl).bind<TaskRepository>()
 
     factoryOf(::GetTasksUseCase)
@@ -23,5 +22,4 @@ val tasksModule = module {
     factoryOf(::DeleteTaskByIdUseCase)
 
     viewModelOf(::TasksViewModel)
-
 }

@@ -11,7 +11,7 @@ interface TaskDao {
     @Query(
         """
         SELECT * FROM tasks 
-        WHERE title LIKE '%' || :query || '%' 
+        WHERE LOWER(title) LIKE '%' || LOWER(:query) || '%' 
         AND (:isCompletedFilter IS NULL OR isCompleted = :isCompletedFilter) 
         ORDER BY isCompleted ASC, createdAt DESC
     """
@@ -21,7 +21,7 @@ interface TaskDao {
     @Query(
         """
         SELECT * FROM tasks 
-        WHERE title LIKE '%' || :query || '%' 
+        WHERE LOWER(title) LIKE '%' || LOWER(:query) || '%' 
         AND (:isCompletedFilter IS NULL OR isCompleted = :isCompletedFilter) 
         ORDER BY isCompleted ASC, createdAt ASC
     """
