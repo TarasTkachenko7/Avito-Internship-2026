@@ -16,7 +16,7 @@ interface TaskDao {
         ORDER BY isCompleted ASC, createdAt DESC
     """
     )
-    fun getTasksDesc(query: String, isCompletedFilter: Boolean? = null): Flow<List<TaskEntity>>
+    fun getTasksDesc(query: String, isCompletedFilter: Boolean?): Flow<List<TaskEntity>>
 
     @Query(
         """
@@ -26,7 +26,7 @@ interface TaskDao {
         ORDER BY isCompleted ASC, createdAt ASC
     """
     )
-    fun getTasksAsc(query: String, isCompletedFilter: Boolean? = null): Flow<List<TaskEntity>>
+    fun getTasksAsc(query: String, isCompletedFilter: Boolean?): Flow<List<TaskEntity>>
 
     @Query(
         """
@@ -47,5 +47,14 @@ interface TaskDao {
         """
     )
     suspend fun updateTaskStatus(taskId: Long, isCompleted: Boolean)
+
+    @Query(
+        """
+        UPDATE tasks 
+        SET title = :title 
+        WHERE id = :taskId
+        """
+    )
+    suspend fun updateTaskTitle(taskId: Long, title: String)
 
 }

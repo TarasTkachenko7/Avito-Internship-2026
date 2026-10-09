@@ -55,5 +55,11 @@
     <string name="voice_error_no_speech">Речь не распознана. Попробуйте еще раз</string>
     <string name="voice_error_unknown">Произошла ошибка распознавания</string>
     <string name="action_done">Готово!</string>
+    <string name="error_empty_title">Название не может быть пустым</string>
+    <string name="error_gigachat">Ошибка гигачата</string>
+    <string name="all">Все</string>
+    <string name="active">Активные</string>
+    <string name="done">Выполненные</string>
+    <string name="tasks">Задачи</string>
 
 </resources>

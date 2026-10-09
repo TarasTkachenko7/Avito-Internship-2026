@@ -168,7 +168,11 @@ class NoteEditorViewModel(
                 imageUri = currentState.imageUri,
                 createdAt = if (noteId == null) System.currentTimeMillis() else originalCreatedAt
             )
-            upsertNoteUseCase(noteToSave)
+            upsertNoteUseCase( id = noteId ?: 0L,
+                rawTitle = currentState.title.trim(),
+                rawText = currentState.text.trim(),
+                imageUri = currentState.imageUri,
+                createdAt = if (noteId == null) System.currentTimeMillis() else originalCreatedAt)
             _effect.trySend(NoteEditorEffect.NavigateBack)
         }
     }

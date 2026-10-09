@@ -9,6 +9,9 @@ import java.util.Locale
 private val baseFormatter: DateTimeFormatter =
     DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
 
+private val shortDateFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("dd.MM.yy")
+
 fun Long.toFormattedDateString(
     zoneId: ZoneId = ZoneId.systemDefault(),
     locale: Locale = Locale.getDefault()
@@ -16,4 +19,13 @@ fun Long.toFormattedDateString(
     return Instant.ofEpochMilli(this)
         .atZone(zoneId)
         .format(baseFormatter.withLocale(locale))
+}
+
+fun Long.toShortFormattedDateString(
+    zoneId: ZoneId = ZoneId.systemDefault(),
+    locale: Locale = Locale.getDefault()
+): String {
+    return Instant.ofEpochMilli(this)
+        .atZone(zoneId)
+        .format(shortDateFormatter.withLocale(locale))
 }
