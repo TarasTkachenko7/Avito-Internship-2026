@@ -7,4 +7,5 @@ data class TaskUiModel(
     val id: Long,
     val title: String,
     val isCompleted: Boolean,
+    val createdAt: String
 )

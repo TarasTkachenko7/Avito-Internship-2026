@@ -11,7 +11,7 @@ interface NoteDao {
     @Query(
         """
         SELECT * FROM notes 
-        WHERE title LIKE '%' || :query || '%' 
+        WHERE LOWER(title) LIKE '%' || LOWER(:query) || '%' 
         ORDER BY createdAt DESC
     """
     )
@@ -20,7 +20,7 @@ interface NoteDao {
     @Query(
         """
         SELECT * FROM notes 
-        WHERE title LIKE '%' || :query || '%' 
+        WHERE LOWER(title) LIKE '%' || LOWER(:query) || '%' 
         ORDER BY createdAt ASC
     """
     )

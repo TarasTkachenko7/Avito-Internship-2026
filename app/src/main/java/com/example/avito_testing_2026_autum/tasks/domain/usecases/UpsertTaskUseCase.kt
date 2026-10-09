@@ -1,17 +1,16 @@
-package com.example.avito_testing_2026_autum.notes.domain.usecases.editor
+package com.example.avito_testing_2026_autum.tasks.domain.usecases
 
-import com.example.avito_testing_2026_autum.notes.domain.model.Note
-import com.example.avito_testing_2026_autum.notes.domain.repository.NoteRepository
+import com.example.avito_testing_2026_autum.tasks.domain.model.Task
+import com.example.avito_testing_2026_autum.tasks.domain.repository.TaskRepository
 import kotlin.coroutines.cancellation.CancellationException
 
-class UpsertNoteUseCase(
-    private val repository: NoteRepository
+class UpsertTaskUseCase(
+    private val repository: TaskRepository
 ) {
     suspend operator fun invoke(
         id: Long = 0L,
         rawTitle: String,
-        rawText: String = "",
-        imageUri: String? = null,
+        isCompleted: Boolean = false,
         createdAt: Long? = null
     ): Result<Unit> {
         val cleanTitle = rawTitle.trim()
@@ -20,16 +19,15 @@ class UpsertNoteUseCase(
             return Result.failure(IllegalArgumentException())
         }
 
-        val note = Note(
+        val task = Task(
             id = id,
             title = cleanTitle,
-            text = rawText.trim(),
-            imageUri = imageUri,
+            isCompleted = isCompleted,
             createdAt = createdAt ?: System.currentTimeMillis()
         )
 
         return try {
-            repository.upsertNote(note)
+            repository.upsertTask(task)
             Result.success(Unit)
         } catch (e: CancellationException) {
             throw e

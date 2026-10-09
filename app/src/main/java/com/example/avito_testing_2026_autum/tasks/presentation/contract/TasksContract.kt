@@ -1,5 +1,7 @@
 package com.example.avito_testing_2026_autum.tasks.presentation.contract
 
+import androidx.compose.runtime.Immutable
+import com.example.avito_testing_2026_autum.core.utils.UiText
 import com.example.avito_testing_2026_autum.tasks.domain.model.TaskFilterType
 import com.example.avito_testing_2026_autum.tasks.domain.model.TaskSortOrder
 import com.example.avito_testing_2026_autum.tasks.presentation.models.TaskUiModel
@@ -7,47 +9,72 @@ import com.example.avito_testing_2026_autum.voice.domain.model.VoiceState
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
+@Immutable
+sealed interface TasksModalOverlay {
+    data object CreateOptions : TasksModalOverlay
+    data class VoiceInput(val voiceState: VoiceState = VoiceState.Idle) : TasksModalOverlay
+    data object AiProcessing : TasksModalOverlay
+}
+
+@Immutable
 data class TasksUiState(
     val isLoading: Boolean = true,
-    val searchQuery: String = "",
+    val tasks: ImmutableList<TaskUiModel> = persistentListOf(),
+
     val appliedSearchQuery: String = "",
     val sortOrder: TaskSortOrder = TaskSortOrder.DATE_DESC,
     val filterType: TaskFilterType = TaskFilterType.ALL,
-    val tasks: ImmutableList<TaskUiModel> = persistentListOf(),
-    val newTaskTitle: String = "",
+
     val isCreatingTask: Boolean = false,
-    val showCreateOptions: Boolean = false,
-    val showVoiceDialog: Boolean = false,
-    val voiceState: VoiceState = VoiceState.Idle,
-    val isAiProcessing: Boolean = false
+    val editingTaskId: Long? = null,
+    val isDeleteModeActive: Boolean = false,
+
+    val currentOverlay: TasksModalOverlay? = null
 )
 
 sealed interface TasksEvent {
-    data class OnSearchQueryChanged(val query: String) : TasksEvent
-    data object OnSearchClicked : TasksEvent
-    data class OnSortClicked(val sortOrder: TaskSortOrder) : TasksEvent
-    data class OnFilterClicked(val filterType: TaskFilterType) : TasksEvent
-    data class OnTaskStatusChanged(val taskId: Long, val isCompleted: Boolean) : TasksEvent
-    data class OnDeleteTaskClicked(val taskId: Long) : TasksEvent
+    // 1. Поиск, сортировка и фильтрация
+    sealed interface Query : TasksEvent {
+        data class SearchSubmit(val query: String) : Query
+        data object SearchClear : Query
+        data class SortSelected(val sortOrder: TaskSortOrder) : Query
+        data class FilterSelected(val filterType: TaskFilterType) : Query
+    }
 
-    // События создания
-    data object OnFabClicked : TasksEvent
-    data object OnDismissCreateOptions : TasksEvent
-    data object OnTextTaskClicked : TasksEvent
+    // 2. Взаимодействие со списком
+    sealed interface Action : TasksEvent {
+        data class StatusChanged(val taskId: Long, val isCompleted: Boolean) : Action
+        data class DeleteClicked(val taskId: Long) : Action
+        data object ToggleDeleteMode : Action
+    }
 
-    // Голосовые события
-    data object OnVoiceTaskClicked : TasksEvent
-    data object OnStopVoiceListening : TasksEvent
-    data object OnDismissVoiceDialog : TasksEvent
-    data object OnPermissionDenied : TasksEvent
+    // 3. Инлайн-создание задачи текстом
+    sealed interface Creation : TasksEvent {
+        data object Start : Creation
+        data class Save(val title: String) : Creation
+        data object Cancel : Creation
+    }
 
-    data class OnNewTaskTitleChanged(val title: String) : TasksEvent
-    data object OnSaveNewTask : TasksEvent
-    data object OnCancelNewTask : TasksEvent
+    // 4. Редактирование задачи
+    sealed interface Edit : TasksEvent {
+        data class Start(val taskId: Long) : Edit
+        data class Save(val taskId: Long, val newTitle: String) : Edit
+        data object Cancel : Edit
+    }
+
+    // 5. Модальные окна и голосовой ввод
+    sealed interface Modal : TasksEvent {
+        data object FabClicked : Modal
+        data object DismissCurrentModal : Modal
+        data object StartVoice : Modal
+        data object VoiceConfirm : Modal
+        data object PermissionDenied : Modal
+    }
 }
 
 sealed interface TasksEffect {
-    data object ScrollToTop : TasksEffect
+    data class ShowError(val message: UiText) : TasksEffect
+    data object RequestRecordAudioPermission : TasksEffect
     data object FocusOnNewTask : TasksEffect
-    data class ShowError(val message: String) : TasksEffect
+    data object ScrollToTop : TasksEffect
 }

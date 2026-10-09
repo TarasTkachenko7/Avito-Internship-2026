@@ -5,6 +5,7 @@ import com.example.avito_testing_2026_autum.tasks.data.local.TaskDao
 import com.example.avito_testing_2026_autum.tasks.data.mapper.toDomain
 import com.example.avito_testing_2026_autum.tasks.data.mapper.toEntity
 import com.example.avito_testing_2026_autum.tasks.domain.model.Task
+import com.example.avito_testing_2026_autum.tasks.domain.model.TaskFilterType
 import com.example.avito_testing_2026_autum.tasks.domain.model.TaskSortOrder
 import com.example.avito_testing_2026_autum.tasks.domain.repository.TaskRepository
 import kotlinx.coroutines.flow.Flow
@@ -20,8 +21,13 @@ class TaskRepositoryImpl(
     override fun getTasks(
         query: String,
         sortOrder: TaskSortOrder,
-        isCompletedFilter: Boolean?
+        filterType: TaskFilterType
     ): Flow<List<Task>> {
+        val isCompletedFilter: Boolean? = when (filterType) {
+            TaskFilterType.ALL -> null
+            TaskFilterType.ACTIVE -> false
+            TaskFilterType.COMPLETED -> true
+        }
         val entitiesFlow = when (sortOrder) {
             TaskSortOrder.DATE_DESC -> dao.getTasksDesc(query, isCompletedFilter)
             TaskSortOrder.DATE_ASC -> dao.getTasksAsc(query, isCompletedFilter)
@@ -31,16 +37,20 @@ class TaskRepositoryImpl(
             .flowOn(dispatchers.io)
     }
 
-    override suspend fun deleteTaskById(id: Long) = withContext(dispatchers.io) {
+    override suspend fun deleteTaskById(id: Long) {
         dao.deleteTaskById(id)
     }
 
-    override suspend fun upsertTask(task: Task) = withContext(dispatchers.io) {
+    override suspend fun upsertTask(task: Task) {
         dao.upsertTask(task.toEntity())
     }
 
-    override suspend fun updateTaskStatus(taskId: Long, isCompleted: Boolean) = withContext(dispatchers.io) {
+    override suspend fun updateTaskStatus(taskId: Long, isCompleted: Boolean) {
         dao.updateTaskStatus(taskId, isCompleted)
+    }
+
+    override suspend fun updateTaskTitle(taskId: Long, title: String) {
+        dao.updateTaskTitle(taskId, title)
     }
 
 }

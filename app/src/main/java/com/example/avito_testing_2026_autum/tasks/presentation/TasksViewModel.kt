@@ -1,15 +1,19 @@
 package com.example.avito_testing_2026_autum.tasks.presentation
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.avito_testing_2026_autum.R
 import com.example.avito_testing_2026_autum.ai.domain.usecases.FormulateTaskUseCase
-import com.example.avito_testing_2026_autum.tasks.domain.usecases.AddInlineTaskUseCase
+import com.example.avito_testing_2026_autum.core.utils.UiText
+import com.example.avito_testing_2026_autum.tasks.domain.model.TaskFilterType
 import com.example.avito_testing_2026_autum.tasks.domain.usecases.DeleteTaskByIdUseCase
 import com.example.avito_testing_2026_autum.tasks.domain.usecases.GetTasksUseCase
 import com.example.avito_testing_2026_autum.tasks.domain.usecases.ToggleTaskStatusUseCase
+import com.example.avito_testing_2026_autum.tasks.domain.usecases.UpdateTaskTitleUseCase
+import com.example.avito_testing_2026_autum.tasks.domain.usecases.UpsertTaskUseCase
 import com.example.avito_testing_2026_autum.tasks.presentation.contract.TasksEffect
 import com.example.avito_testing_2026_autum.tasks.presentation.contract.TasksEvent
+import com.example.avito_testing_2026_autum.tasks.presentation.contract.TasksModalOverlay
 import com.example.avito_testing_2026_autum.tasks.presentation.contract.TasksUiState
 import com.example.avito_testing_2026_autum.tasks.presentation.mapper.toUiModel
 import com.example.avito_testing_2026_autum.voice.domain.model.VoiceState
@@ -34,8 +38,9 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalCoroutinesApi::class)
 class TasksViewModel(
     private val getTasksUseCase: GetTasksUseCase,
-    private val addInlineTaskUseCase: AddInlineTaskUseCase,
+    private val upsertTaskUseCase: UpsertTaskUseCase,
     private val toggleTaskStatusUseCase: ToggleTaskStatusUseCase,
+    private val updateTaskTitleUseCase: UpdateTaskTitleUseCase,
     private val deleteTaskUseCase: DeleteTaskByIdUseCase,
     private val formulateTaskUseCase: FormulateTaskUseCase,
     private val speechRecognizer: SpeechRecognizerContract
@@ -44,8 +49,7 @@ class TasksViewModel(
     private val _state = MutableStateFlow(TasksUiState())
     val state: StateFlow<TasksUiState> = _state.asStateFlow()
 
-    // Вспоминаем про паттерн из 1 итерации
-    private val _effect = Channel<TasksEffect>(Channel.BUFFERED)
+    private val _effect = Channel<TasksEffect>(capacity = Channel.BUFFERED)
     val effect = _effect.receiveAsFlow()
 
     init {
@@ -54,23 +58,21 @@ class TasksViewModel(
     }
 
     private fun observeTasks() {
-        // ... (оставляем старую реализацию observeTasks без изменений)
-        state
-            .map { it.appliedSearchQuery to it.sortOrder }
-            .distinctUntilChanged()
-            .flatMapLatest { (query, sortType) ->
-                getTasksUseCase(query, sortType)
-                    .map { domainTasks ->
-                        domainTasks.map { it.toUiModel() }.toPersistentList()
-                    }
-                    .catch { exception ->
-                        emit(persistentListOf())
-                    }
-            }
-            .onEach { tasksList ->
-                _state.update { it.copy(tasks = tasksList, isLoading = false) }
-            }
-            .launchIn(viewModelScope)
+        viewModelScope.launch {
+            _state
+                .map { Triple(it.appliedSearchQuery, it.sortOrder, it.filterType) }
+                .distinctUntilChanged()
+                .flatMapLatest { (query, sortType, filterType) ->
+                    getTasksUseCase(query, sortType, filterType)
+                        .map { domainTasks ->
+                            domainTasks.map { it.toUiModel() }.toPersistentList()
+                        }
+                        .catch { emit(persistentListOf()) }
+                }
+                .collect { tasksList ->
+                    _state.update { it.copy(tasks = tasksList, isLoading = false) }
+                }
+        }
     }
 
     private fun observeVoiceState() {
@@ -78,14 +80,17 @@ class TasksViewModel(
             .onEach { voiceState ->
                 when (voiceState) {
                     is VoiceState.Success -> {
-                        _state.update {
-                            it.copy(showVoiceDialog = false, isAiProcessing = true, voiceState = VoiceState.Idle)
-                        }
+                        _state.update { it.copy(currentOverlay = TasksModalOverlay.AiProcessing) }
                         speechRecognizer.reset()
                         processVoiceWithGigaChat(voiceState.text)
                     }
+
                     else -> {
-                        _state.update { it.copy(voiceState = voiceState) }
+                        if (_state.value.currentOverlay is TasksModalOverlay.VoiceInput) {
+                            _state.update {
+                                it.copy(currentOverlay = TasksModalOverlay.VoiceInput(voiceState))
+                            }
+                        }
                     }
                 }
             }
@@ -96,60 +101,163 @@ class TasksViewModel(
         viewModelScope.launch {
             formulateTaskUseCase(rawText)
                 .onSuccess { formulatedText ->
-                    addInlineTaskUseCase(formulatedText)
-                    _state.update { it.copy(isAiProcessing = false) }
+                    upsertTaskUseCase(rawTitle = formulatedText)
+                    _state.update { it.copy(currentOverlay = null) }
                 }
                 .onFailure { error ->
-                    // Выводим полный стэк-трейс ошибки в консоль
-                    Log.e("TasksViewModel", "GigaChat failed to formulate task", error)
-
-                    _state.update { it.copy(isAiProcessing = false) }
-                    sendEffect(TasksEffect.ShowError("Ошибка GigaChat: ${error.message ?: "Неизвестная ошибка"}"))
+                    _state.update { it.copy(currentOverlay = null) }
+                    sendEffect(
+                        TasksEffect.ShowError(UiText.StringResource(R.string.error_gigachat))
+                    )
                 }
         }
     }
 
     fun handleEvent(event: TasksEvent) {
         when (event) {
-            is TasksEvent.OnFabClicked -> _state.update { it.copy(showCreateOptions = true) }
-            is TasksEvent.OnDismissCreateOptions -> _state.update { it.copy(showCreateOptions = false) }
-            is TasksEvent.OnTextTaskClicked -> {
-                _state.update { it.copy(showCreateOptions = false, isCreatingTask = true, newTaskTitle = "") }
+            is TasksEvent.Query -> handleQuery(event)
+            is TasksEvent.Action -> handleAction(event)
+            is TasksEvent.Creation -> handleCreation(event)
+            is TasksEvent.Edit -> handleEdit(event)
+            is TasksEvent.Modal -> handleModal(event)
+        }
+    }
+
+    private fun handleQuery(event: TasksEvent.Query) {
+        when (event) {
+            is TasksEvent.Query.SearchSubmit -> _state.update { it.copy(appliedSearchQuery = event.query.trim()) }
+            is TasksEvent.Query.SearchClear -> _state.update { it.copy(appliedSearchQuery = "") }
+            is TasksEvent.Query.SortSelected -> {
+                _state.update { it.copy(sortOrder = event.sortOrder) }
+                sendEffect(TasksEffect.ScrollToTop)
+            }
+            is TasksEvent.Query.FilterSelected -> {
+                _state.update { it.copy(filterType = event.filterType) }
+                sendEffect(TasksEffect.ScrollToTop)
+            }
+        }
+    }
+
+    private fun handleAction(event: TasksEvent.Action) {
+        when (event) {
+            is TasksEvent.Action.StatusChanged -> viewModelScope.launch {
+                toggleTaskStatusUseCase(event.taskId, event.isCompleted)
+            }
+
+            is TasksEvent.Action.DeleteClicked -> viewModelScope.launch {
+                deleteTaskUseCase(event.taskId)
+            }
+
+            is TasksEvent.Action.ToggleDeleteMode -> {
+                _state.update { current ->
+                    val nextMode = !current.isDeleteModeActive
+                    current.copy(
+                        isDeleteModeActive = nextMode,
+                        isCreatingTask = false,
+                        editingTaskId = null,
+                        currentOverlay = null
+                    )
+                }
+            }
+        }
+    }
+
+    private fun handleCreation(event: TasksEvent.Creation) {
+        when (event) {
+            is TasksEvent.Creation.Start -> {
+                _state.update {
+                    it.copy(
+                        isCreatingTask = true,
+                        currentOverlay = null,
+                        editingTaskId = null,
+                        isDeleteModeActive = false,
+                        filterType = TaskFilterType.ALL
+                    )
+                }
                 sendEffect(TasksEffect.ScrollToTop)
                 sendEffect(TasksEffect.FocusOnNewTask)
             }
-            is TasksEvent.OnVoiceTaskClicked -> {
-                _state.update { it.copy(showCreateOptions = false, showVoiceDialog = true) }
-                speechRecognizer.startListening()
-            }
-            is TasksEvent.OnStopVoiceListening -> speechRecognizer.stopListening()
-            is TasksEvent.OnDismissVoiceDialog -> {
-                speechRecognizer.cancel()
-                _state.update { it.copy(showVoiceDialog = false) }
-            }
-            is TasksEvent.OnPermissionDenied -> {
-                sendEffect(TasksEffect.ShowError("Отсутствует разрешение на микрофон"))
+
+            is TasksEvent.Creation.Cancel -> {
+                _state.update { it.copy(isCreatingTask = false) }
             }
 
-            // ... (оставляем старые обработчики)
-            is TasksEvent.OnSearchQueryChanged -> _state.update { it.copy(searchQuery = event.query) }
-            is TasksEvent.OnSearchClicked -> _state.update { it.copy(appliedSearchQuery = it.searchQuery) }
-            is TasksEvent.OnSortClicked -> _state.update { it.copy(sortOrder = event.sortOrder) }
-            is TasksEvent.OnFilterClicked -> _state.update { it.copy(filterType = event.filterType) }
-            is TasksEvent.OnTaskStatusChanged -> viewModelScope.launch { toggleTaskStatusUseCase(event.taskId, event.isCompleted) }
-            is TasksEvent.OnDeleteTaskClicked -> viewModelScope.launch { deleteTaskUseCase(event.taskId) }
-            is TasksEvent.OnNewTaskTitleChanged -> _state.update { it.copy(newTaskTitle = event.title) }
-            is TasksEvent.OnCancelNewTask -> _state.update { it.copy(isCreatingTask = false, newTaskTitle = "") }
-            is TasksEvent.OnSaveNewTask -> {
-                val titleToSave = state.value.newTaskTitle
+            is TasksEvent.Creation.Save -> {
                 viewModelScope.launch {
-                    val saved = addInlineTaskUseCase(titleToSave)
-                    if (saved) {
-                        _state.update { it.copy(isCreatingTask = false, newTaskTitle = "") }
-                    } else {
-                        sendEffect(TasksEffect.ShowError("Пустая задача"))
-                    }
+                    upsertTaskUseCase(rawTitle = event.title)
+                        .onSuccess {
+                            _state.update { it.copy(isCreatingTask = false) }
+                        }
+                        .onFailure { error ->
+                            if (error is IllegalArgumentException) {
+                                sendEffect(TasksEffect.ShowError(UiText.StringResource(R.string.error_empty_title)))
+                            }
+                        }
                 }
+            }
+        }
+    }
+
+    private fun handleEdit(event: TasksEvent.Edit) {
+        when (event) {
+            is TasksEvent.Edit.Start -> {
+                _state.update {
+                    it.copy(
+                        editingTaskId = event.taskId,
+                        isDeleteModeActive = false,
+                        isCreatingTask = false,
+                        currentOverlay = null
+                    )
+                }
+            }
+
+            is TasksEvent.Edit.Cancel -> {
+                _state.update { it.copy(editingTaskId = null) }
+            }
+
+            is TasksEvent.Edit.Save -> {
+                viewModelScope.launch {
+                    updateTaskTitleUseCase(event.taskId, event.newTitle)
+                        .onSuccess {
+                            _state.update { it.copy(editingTaskId = null) }
+                        }
+                        .onFailure { error ->
+                            if (error is IllegalArgumentException) {
+                                sendEffect(TasksEffect.ShowError(UiText.StringResource(R.string.error_empty_title)))
+                            }
+                        }
+                }
+            }
+        }
+    }
+
+    private fun handleModal(event: TasksEvent.Modal) {
+        when (event) {
+            is TasksEvent.Modal.FabClicked -> _state.update {
+                it.copy(
+                    currentOverlay = TasksModalOverlay.CreateOptions,
+                    isCreatingTask = false,
+                    editingTaskId = null,
+                    isDeleteModeActive = false
+                )
+            }
+
+            is TasksEvent.Modal.DismissCurrentModal -> {
+                speechRecognizer.cancel()
+                _state.update { it.copy(currentOverlay = null) }
+            }
+
+            is TasksEvent.Modal.StartVoice -> {
+                _state.update { it.copy(currentOverlay = TasksModalOverlay.VoiceInput()) }
+                speechRecognizer.startListening()
+            }
+
+            is TasksEvent.Modal.VoiceConfirm -> speechRecognizer.stopListening()
+            is TasksEvent.Modal.PermissionDenied -> {
+                _state.update { it.copy(currentOverlay = null) }
+                sendEffect(
+                    TasksEffect.ShowError(UiText.StringResource(R.string.voice_error_permission_denied))
+                )
             }
         }
     }
@@ -162,4 +270,5 @@ class TasksViewModel(
         super.onCleared()
         speechRecognizer.cancel()
     }
+
 }
