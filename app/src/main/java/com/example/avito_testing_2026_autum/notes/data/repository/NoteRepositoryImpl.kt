@@ -20,7 +20,11 @@ class NoteRepositoryImpl(
         query: String,
         sortOrder: NoteSortOrder
     ): Flow<List<Note>> {
-        val sanitizedQuery = query.trim()
+        val sanitizedQuery = query
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_")
+
         val entitiesFlow = when (sortOrder) {
             NoteSortOrder.DATE_DESC -> dao.getNotesDesc(sanitizedQuery)
             NoteSortOrder.DATE_ASC -> dao.getNotesAsc(sanitizedQuery)

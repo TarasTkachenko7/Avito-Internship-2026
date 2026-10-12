@@ -51,4 +51,21 @@ class FileManagerImpl(
             }
         }
     }
+
+    override suspend fun deleteFile(uriString: String): Boolean = withContext(dispatchers.io) {
+        try {
+            val uri = uriString.toUri()
+            val path = uri.path ?: return@withContext false
+            val file = File(path)
+            if (file.exists()) {
+                file.delete()
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Log.e("FileManagerImpl", "Failed to delete file", e)
+            false
+        }
+    }
 }

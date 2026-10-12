@@ -5,4 +5,5 @@ import java.io.File
 interface FileManager {
     suspend fun createTempImageFile(prefix: String = "IMG_"): File
     suspend fun copyImageToInternalStorage(uriString: String, prefix: String = "IMG_"): String?
+    suspend fun deleteFile(uriString: String): Boolean
 }

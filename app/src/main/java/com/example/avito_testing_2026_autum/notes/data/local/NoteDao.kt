@@ -11,8 +11,8 @@ interface NoteDao {
     @Query(
         """
         SELECT * FROM notes 
-        WHERE LOWER(title) LIKE '%' || LOWER(:query) || '%' 
-        ORDER BY createdAt DESC
+        WHERE LOWER(title) LIKE '%' || LOWER(:query) || '%' ESCAPE '\' 
+        ORDER BY created_at DESC
     """
     )
     fun getNotesDesc(query: String): Flow<List<NoteEntity>>
@@ -20,8 +20,8 @@ interface NoteDao {
     @Query(
         """
         SELECT * FROM notes 
-        WHERE LOWER(title) LIKE '%' || LOWER(:query) || '%' 
-        ORDER BY createdAt ASC
+        WHERE LOWER(title) LIKE '%' || LOWER(:query) || '%' ESCAPE '\'
+        ORDER BY created_at ASC
     """
     )
     fun getNotesAsc(query: String): Flow<List<NoteEntity>>

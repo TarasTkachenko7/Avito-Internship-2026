@@ -10,7 +10,6 @@ import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.SaveIma
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.UpsertNoteUseCase
 import com.example.avito_testing_2026_autum.notes.presentation.NotesViewModel
 import com.example.avito_testing_2026_autum.notes.presentation.editor.NoteEditorViewModel
-import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
@@ -20,12 +19,12 @@ val notesModule = module {
 
     singleOf(::NoteRepositoryImpl).bind<NoteRepository>()
 
-    factoryOf(::GetNotesUseCase)
-    factoryOf(::DeleteNoteUseCase)
-    factoryOf(::GetNoteByIdUseCase)
-    factoryOf(::UpsertNoteUseCase)
-    factoryOf(::SaveImageUseCase)
-    factoryOf(::CreateTempImageFileUseCase)
+    singleOf(::GetNotesUseCase)
+    singleOf(::DeleteNoteUseCase)
+    singleOf(::GetNoteByIdUseCase)
+    singleOf(::UpsertNoteUseCase)
+    singleOf(::SaveImageUseCase)
+    singleOf(::CreateTempImageFileUseCase)
 
     viewModelOf(::NotesViewModel)
     viewModelOf(::NoteEditorViewModel)
