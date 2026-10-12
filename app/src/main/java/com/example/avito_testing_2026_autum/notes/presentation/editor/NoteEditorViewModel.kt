@@ -5,29 +5,28 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.example.avito_testing_2026_autum.app.navigation.Screen
-import com.example.avito_testing_2026_autum.notes.domain.model.Note
+import com.example.avito_testing_2026_autum.core.utils.UiText
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.CreateTempImageFileUseCase
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.GetNoteByIdUseCase
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.SaveImageUseCase
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.UpsertNoteUseCase
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorEffect
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorEvent
+import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorOverlay
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorUiState
 import com.example.avito_testing_2026_autum.voice.domain.model.VoiceState
 import com.example.avito_testing_2026_autum.voice.domain.recognition.SpeechRecognizerContract
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.avito_testing_2026_autum.R
 
 class NoteEditorViewModel(
-    private val savedStateHandle: SavedStateHandle,
+    savedStateHandle: SavedStateHandle,
     private val getNoteByIdUseCase: GetNoteByIdUseCase,
     private val upsertNoteUseCase: UpsertNoteUseCase,
     private val saveImageUseCase: SaveImageUseCase,
@@ -40,14 +39,8 @@ class NoteEditorViewModel(
     private val _state = MutableStateFlow(NoteEditorUiState())
     val state: StateFlow<NoteEditorUiState> = _state.asStateFlow()
 
-    private val _effect = Channel<NoteEditorEffect>(
-        capacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_LATEST
-    )
+    private val _effect = Channel<NoteEditorEffect>(capacity = Channel.BUFFERED)
     val effect = _effect.receiveAsFlow()
-
-    private var originalCreatedAt: Long = 0L
-    private var tempCameraPath: String? = null
 
     init {
         observeVoiceState()
@@ -59,8 +52,8 @@ class NoteEditorViewModel(
     }
 
     private fun observeVoiceState() {
-        speechRecognizer.voiceState
-            .onEach { voiceState ->
+        viewModelScope.launch {
+            speechRecognizer.voiceState.collect { voiceState ->
                 when (voiceState) {
                     is VoiceState.Success -> {
                         val currentText = _state.value.text
@@ -72,109 +65,172 @@ class NoteEditorViewModel(
                         _state.update {
                             it.copy(
                                 text = appendedText,
-                                voiceState = voiceState,
-                                showVoiceDialog = false
+                                currentOverlay = null
                             )
                         }
                         speechRecognizer.reset()
                     }
+
                     else -> {
-                        _state.update { it.copy(voiceState = voiceState) }
+                        val currentOverlay = _state.value.currentOverlay
+                        if (currentOverlay is NoteEditorOverlay.VoiceInput) {
+                            _state.update {
+                                it.copy(currentOverlay = NoteEditorOverlay.VoiceInput(voiceState))
+                            }
+                        }
                     }
                 }
             }
-            .launchIn(viewModelScope)
+        }
     }
 
     private fun loadNote(id: Long) {
         viewModelScope.launch {
             val note = getNoteByIdUseCase(id)
-            note?.let { loadedNote ->
-                originalCreatedAt = loadedNote.createdAt
+            if (note != null) {
                 _state.update {
                     it.copy(
-                        title = loadedNote.title,
-                        text = loadedNote.text,
-                        imageUri = loadedNote.imageUri,
+                        title = note.title,
+                        text = note.text,
+                        imageUri = note.imageUri,
+                        originalCreatedAt = note.createdAt,
                         isLoading = false
                     )
                 }
+            } else {
+                _state.update { it.copy(isLoading = false) }
+                sendEffect(NoteEditorEffect.ShowMessage(UiText.StringResource(R.string.note_editor_error_not_found)))
+                sendEffect(NoteEditorEffect.NavigateBack)
             }
         }
     }
 
     fun handleEvent(event: NoteEditorEvent) {
         when (event) {
-            is NoteEditorEvent.OnTitleChanged -> _state.update { it.copy(title = event.title) }
-            is NoteEditorEvent.OnTextChanged -> _state.update { it.copy(text = event.text) }
-            is NoteEditorEvent.OnAttachmentClicked -> _state.update { it.copy(showAttachmentDialog = true) }
-            is NoteEditorEvent.OnDismissAttachmentDialog -> _state.update { it.copy(showAttachmentDialog = false) }
-            is NoteEditorEvent.OnGalleryClicked -> _state.update { it.copy(showAttachmentDialog = false) }
-            is NoteEditorEvent.OnCameraClicked -> {
-                _state.update { it.copy(showAttachmentDialog = false) }
+            is NoteEditorEvent.Input -> handleInput(event)
+            is NoteEditorEvent.Action -> handleAction(event)
+            is NoteEditorEvent.Dialog -> handleDialog(event)
+            is NoteEditorEvent.Media -> handleMedia(event)
+            is NoteEditorEvent.Voice -> handleVoice(event)
+        }
+    }
+
+    private fun handleInput(event: NoteEditorEvent.Input) {
+        when (event) {
+            is NoteEditorEvent.Input.TitleChanged -> _state.update { it.copy(title = event.title) }
+            is NoteEditorEvent.Input.TextChanged -> _state.update { it.copy(text = event.text) }
+        }
+    }
+
+    private fun handleAction(event: NoteEditorEvent.Action) {
+        when (event) {
+            is NoteEditorEvent.Action.AttachmentClicked -> {
+                _state.update { it.copy(currentOverlay = NoteEditorOverlay.AttachmentOptions) }
+            }
+
+            is NoteEditorEvent.Action.RemoveImageClicked -> {
+                _state.update { it.copy(imageUri = null) }
+            }
+
+            is NoteEditorEvent.Action.SaveClicked -> saveNote()
+            is NoteEditorEvent.Action.BackClicked -> sendEffect(NoteEditorEffect.NavigateBack)
+        }
+    }
+
+    private fun handleDialog(event: NoteEditorEvent.Dialog) {
+        when (event) {
+            is NoteEditorEvent.Dialog.DismissOverlay -> {
+                _state.update { it.copy(currentOverlay = null) }
+            }
+
+            is NoteEditorEvent.Dialog.GalleryClicked -> {
+                _state.update { it.copy(currentOverlay = null) }
+            }
+
+            is NoteEditorEvent.Dialog.CameraClicked -> {
+                _state.update { it.copy(currentOverlay = null) }
                 prepareCamera()
             }
-            is NoteEditorEvent.OnImagePicked -> processAndSaveImage(event.uriString)
-            is NoteEditorEvent.OnCameraCaptureSuccess -> {
-                tempCameraPath?.let { path ->
+        }
+    }
+
+    private fun handleMedia(event: NoteEditorEvent.Media) {
+        when (event) {
+            is NoteEditorEvent.Media.ImagePicked -> processAndSaveImage(event.uriString)
+            is NoteEditorEvent.Media.CameraCaptureSuccess -> {
+                _state.value.tempCameraUri?.let { path ->
                     processAndSaveImage(path)
-                    tempCameraPath = null
+                    _state.update { it.copy(tempCameraUri = null) }
                 }
             }
-            is NoteEditorEvent.OnRemoveImageClicked -> _state.update { it.copy(imageUri = null) }
-            is NoteEditorEvent.OnSaveClicked -> saveNote()
-            is NoteEditorEvent.OnBackClicked -> _effect.trySend(NoteEditorEffect.NavigateBack)
-            
-            is NoteEditorEvent.OnVoiceInputClicked -> {
-                _state.update { it.copy(showVoiceDialog = true) }
+        }
+    }
+
+    private fun handleVoice(event: NoteEditorEvent.Voice) {
+        when (event) {
+            is NoteEditorEvent.Voice.VoiceInputClicked -> {
+                _state.update { it.copy(currentOverlay = NoteEditorOverlay.VoiceInput()) }
                 speechRecognizer.startListening()
             }
-            is NoteEditorEvent.OnStopVoiceListening -> {
+
+            is NoteEditorEvent.Voice.StopVoiceListening -> {
                 speechRecognizer.stopListening()
             }
-            is NoteEditorEvent.OnDismissVoiceDialog -> {
-                speechRecognizer.cancel()
-                _state.update { it.copy(showVoiceDialog = false) }
-            }
-            is NoteEditorEvent.OnPermissionDenied -> {
-                _effect.trySend(NoteEditorEffect.ShowMessage("Для голосового ввода требуется доступ к микрофону"))
+
+            is NoteEditorEvent.Voice.PermissionDenied -> {
+                sendEffect(NoteEditorEffect.ShowMessage(UiText.StringResource(R.string.note_editor_error_mic_permission)))
             }
         }
     }
 
     private fun prepareCamera() {
         viewModelScope.launch {
-            val tempFile = createTempImageFileUseCase()
-            tempCameraPath = tempFile.absolutePath
-            _effect.trySend(NoteEditorEffect.LaunchCamera(tempFile.absolutePath))
+            try {
+                val tempFile = createTempImageFileUseCase()
+                val absolutePath = tempFile.absolutePath
+                _state.update { it.copy(tempCameraUri = absolutePath) }
+                sendEffect(NoteEditorEffect.LaunchCamera(absolutePath))
+            } catch (e: Exception) {
+                sendEffect(NoteEditorEffect.ShowMessage(UiText.StringResource(R.string.note_editor_error_camera_prep)))
+            }
         }
     }
 
     private fun processAndSaveImage(sourceUri: String) {
         viewModelScope.launch {
             val permanentPath = saveImageUseCase(sourceUri)
-            _state.update { it.copy(imageUri = permanentPath) }
+            if (permanentPath != null) {
+                _state.update { it.copy(imageUri = permanentPath) }
+            } else {
+                sendEffect(NoteEditorEffect.ShowMessage(UiText.StringResource(R.string.note_editor_error_image_save)))
+            }
         }
     }
 
     private fun saveNote() {
         val currentState = state.value
         if (!currentState.isSaveButtonEnabled) return
+
+        _state.update { it.copy(isSaving = true) }
+
         viewModelScope.launch {
-            val noteToSave = Note(
+            upsertNoteUseCase(
                 id = noteId ?: 0L,
-                title = currentState.title.trim(),
-                text = currentState.text.trim(),
+                rawTitle = currentState.title,
+                rawText = currentState.text,
                 imageUri = currentState.imageUri,
-                createdAt = if (noteId == null) System.currentTimeMillis() else originalCreatedAt
-            )
-            upsertNoteUseCase( id = noteId ?: 0L,
-                rawTitle = currentState.title.trim(),
-                rawText = currentState.text.trim(),
-                imageUri = currentState.imageUri,
-                createdAt = if (noteId == null) System.currentTimeMillis() else originalCreatedAt)
-            _effect.trySend(NoteEditorEffect.NavigateBack)
+                createdAt = currentState.originalCreatedAt
+            ).onSuccess {
+                sendEffect(NoteEditorEffect.NavigateBack)
+            }.onFailure {
+                _state.update { it.copy(isSaving = false) }
+                sendEffect(NoteEditorEffect.ShowMessage(UiText.StringResource(R.string.note_editor_error_note_save)))
+            }
         }
+    }
+
+    private fun sendEffect(effect: NoteEditorEffect) {
+        _effect.trySend(effect)
     }
 
     override fun onCleared() {
