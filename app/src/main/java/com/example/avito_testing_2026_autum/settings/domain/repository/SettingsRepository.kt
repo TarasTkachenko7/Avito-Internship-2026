@@ -11,5 +11,6 @@ interface SettingsRepository {
 
     suspend fun setThemeMode(mode: ThemeMode)
     suspend fun setAccentColor(color: AccentColor)
+    suspend fun resetSettings()
 
 }

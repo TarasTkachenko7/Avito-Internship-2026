@@ -38,13 +38,13 @@ class SettingsRepositoryImpl(
     override val themeMode: Flow<ThemeMode> = safePreferencesFlow
         .map { preferences ->
             val name = preferences[PreferencesKeys.THEME_MODE]
-            name?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM
+            ThemeMode.entries.find { it.name == name } ?: ThemeMode.SYSTEM
         }
 
     override val accentColor: Flow<AccentColor> = safePreferencesFlow
         .map { preferences ->
             val name = preferences[PreferencesKeys.ACCENT_COLOR]
-            name?.let { runCatching { AccentColor.valueOf(it) }.getOrNull() } ?: AccentColor.DEFAULT
+            AccentColor.entries.find { it.name == name } ?: AccentColor.DEFAULT
         }
 
     override suspend fun setAccentColor(color: AccentColor) {
@@ -56,6 +56,13 @@ class SettingsRepositoryImpl(
     override suspend fun setThemeMode(mode: ThemeMode) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.THEME_MODE] = mode.name
+        }
+    }
+
+    override suspend fun resetSettings() {
+        dataStore.edit { preferences ->
+            preferences.remove(PreferencesKeys.THEME_MODE)
+            preferences.remove(PreferencesKeys.ACCENT_COLOR)
         }
     }
 

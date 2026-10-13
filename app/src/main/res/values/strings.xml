@@ -40,9 +40,9 @@
     <string name="color_scheme_title">Акцентный цвет</string>
     <string name="selected">Выбран</string>
     <string name="reset_settings">Сбросить настройки</string>
-    <string name="theme_system">Системная тема</string>
-    <string name="theme_light">Светлая тема</string>
-    <string name="theme_dark">Тёмная тема</string>
+    <string name="theme_system">Системная</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Тёмная</string>
     <string name="balance_pay_as_you_go">Pay-as-you-go</string>
     <string name="error_loading_balance">Не удалось загрузить баланс</string>
     <string name="error_network_connection">Отсутствует подключение к интернету</string>
@@ -77,5 +77,7 @@
     <string name="unsaved_changes_title">Несохраненные изменения</string>
     <string name="unsaved_changes_message">Вы точно хотите выйти? Все несохраненные данные будут утеряны.</string>
     <string name="action_exit">Выйти</string>
+    <string name="tokens">" токенов"</string>
+    <string name="accent_info">Цвет применяется к кнопкам, переключателям и активной вкладке навигации.</string>
 
 </resources>
