@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -31,7 +31,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.avito_testing_2026_autum.R
-import com.example.avito_testing_2026_autum.core.utils.toFormattedDateString
 import com.example.avito_testing_2026_autum.notes.presentation.models.NoteUiModel
 
 @Composable
@@ -45,18 +44,22 @@ fun NoteItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clip(RoundedCornerShape(20.dp))
             .clickable(
                 enabled = !isDeleteModeActive,
                 onClick = onNoteClick
             ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             NoteImage(
@@ -66,14 +69,30 @@ fun NoteItem(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            NoteContent(
-                title = note.title,
-                dateFormatted = note.dateFormatted,
-                modifier = Modifier.weight(1f)
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = note.title.ifBlank { stringResource(R.string.untitled_note) },
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = note.dateFormatted,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             if (isDeleteModeActive) {
-                DeleteButton(onClick = onDeleteClick)
+                IconButton(onClick = onDeleteClick) {
+                    Icon(
+                        imageVector = Icons.Default.DeleteOutline,
+                        contentDescription = stringResource(R.string.delete_note_dialog_title),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }
@@ -81,17 +100,18 @@ fun NoteItem(
 
 @Composable
 private fun NoteImage(imageUri: String?, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(16.dp)
     if (imageUri != null) {
         AsyncImage(
             model = imageUri,
             contentDescription = stringResource(R.string.note_preview),
             contentScale = ContentScale.Crop,
-            modifier = modifier.clip(RoundedCornerShape(8.dp))
+            modifier = modifier.clip(shape)
         )
     } else {
         Box(
             modifier = modifier
-                .clip(RoundedCornerShape(8.dp))
+                .clip(shape)
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
@@ -101,35 +121,5 @@ private fun NoteImage(imageUri: String?, modifier: Modifier = Modifier) {
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
-    }
-}
-
-@Composable
-private fun NoteContent(title: String, dateFormatted: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = dateFormatted,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-private fun DeleteButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    IconButton(onClick = onClick, modifier = modifier) {
-        Icon(
-            imageVector = Icons.Default.Delete,
-            contentDescription = stringResource(R.string.delete_note_dialog_title),
-            tint = MaterialTheme.colorScheme.error
-        )
     }
 }

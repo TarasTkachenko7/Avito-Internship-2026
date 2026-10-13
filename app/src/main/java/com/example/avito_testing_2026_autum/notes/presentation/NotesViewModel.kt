@@ -1,6 +1,5 @@
 package com.example.avito_testing_2026_autum.notes.presentation
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.avito_testing_2026_autum.notes.domain.usecases.DeleteNoteUseCase
@@ -11,8 +10,8 @@ import com.example.avito_testing_2026_autum.notes.presentation.contract.NotesUiS
 import com.example.avito_testing_2026_autum.notes.presentation.mapper.toUiModel
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,12 +19,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NotesViewModel(
@@ -47,9 +45,13 @@ class NotesViewModel(
         viewModelScope.launch {
             _state.map { it.appliedSearchQuery to it.sortOrder }.distinctUntilChanged()
                 .flatMapLatest { (query, sortOrder) ->
-                    getNotesUseCase(query, sortOrder).map { domainNotes ->
-                        domainNotes.map { it.toUiModel() }.toPersistentList()
-                    }.catch { emit(persistentListOf()) }
+                    getNotesUseCase(query, sortOrder)
+                        .map { domainNotes ->
+                            withContext(Dispatchers.Default) {
+                                domainNotes.map { it.toUiModel() }.toPersistentList()
+                            }
+                        }
+                        .catch { emit(persistentListOf()) }
                 }.collect { notesList ->
                     _state.update { it.copy(notes = notesList, isLoading = false) }
                 }
@@ -69,9 +71,11 @@ class NotesViewModel(
             is NotesEvent.Query.SearchSubmit -> {
                 _state.update { it.copy(appliedSearchQuery = event.query) }
             }
+
             is NotesEvent.Query.SearchClear -> {
                 _state.update { it.copy(appliedSearchQuery = "") }
             }
+
             is NotesEvent.Query.SortSelected -> {
                 _state.update { it.copy(sortOrder = event.sortOrder) }
             }
@@ -85,9 +89,11 @@ class NotesViewModel(
                     sendEffect(NotesEffect.NavigateToEditor(event.id))
                 }
             }
+
             is NotesEvent.Action.CreateNoteClicked -> {
                 sendEffect(NotesEffect.NavigateToEditor(null))
             }
+
             is NotesEvent.Action.ToggleDeleteMode -> {
                 _state.update {
                     it.copy(
@@ -96,6 +102,7 @@ class NotesViewModel(
                     )
                 }
             }
+
             is NotesEvent.Action.DeleteIconClicked -> {
                 _state.update { it.copy(noteIdToDelete = event.id) }
             }
@@ -113,6 +120,7 @@ class NotesViewModel(
                     }
                 }
             }
+
             is NotesEvent.Modal.DismissDeleteDialog -> {
                 _state.update { it.copy(noteIdToDelete = null) }
             }

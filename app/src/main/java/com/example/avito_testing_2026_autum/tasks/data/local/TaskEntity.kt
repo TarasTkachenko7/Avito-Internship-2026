@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
 @Entity(
     tableName = "tasks",
     indices = [
-        Index(value = ["isCompleted", "createdAt"])
+        Index(value = ["is_completed", "created_at"])
     ]
 )
 data class TaskEntity(

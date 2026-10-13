@@ -66,5 +66,16 @@
     <string name="note_editor_error_camera_prep">Ошибка при подготовке камеры</string>
     <string name="note_editor_error_image_save">Не удалось сохранить изображение</string>
     <string name="note_editor_error_note_save">Ошибка сохранения заметки</string>
+    <string name="untitled_note">Неизвестная заметка</string>
+    <string name="notes_title">Заметки</string>
+    <string name="new_note">Новая заметка</string>
+    <string name="note">Заметка</string>
+    <string name="note_text">Текст заметки</string>
+    <string name="image">Изображение</string>
+    <string name="gallery">Галерея</string>
+    <string name="camera">Камера</string>
+    <string name="unsaved_changes_title">Несохраненные изменения</string>
+    <string name="unsaved_changes_message">Вы точно хотите выйти? Все несохраненные данные будут утеряны.</string>
+    <string name="action_exit">Выйти</string>
 
 </resources>

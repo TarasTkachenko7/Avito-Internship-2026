@@ -5,26 +5,31 @@ import com.example.avito_testing_2026_autum.core.utils.UiText
 import com.example.avito_testing_2026_autum.voice.domain.model.VoiceState
 
 @Immutable
-sealed interface NoteEditorOverlay {
-    data object AttachmentOptions : NoteEditorOverlay
-    data class VoiceInput(val voiceState: VoiceState = VoiceState.Idle) : NoteEditorOverlay
-}
-
-@Immutable
 data class NoteEditorUiState(
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
+
     val title: String = "",
     val text: String = "",
     val imageUri: String? = null,
-
     val tempCameraUri: String? = null,
+
+    val originalTitle: String = "",
+    val originalText: String = "",
+    val originalImageUri: String? = null,
     val originalCreatedAt: Long? = null,
 
-    val currentOverlay: NoteEditorOverlay? = null
+    val showVoiceDialog: Boolean = false,
+    val voiceState: VoiceState = VoiceState.Idle,
+    val showUnsavedChangesDialog: Boolean = false,
 ) {
+    val hasChanges: Boolean
+        get() = title.trim() != originalTitle.trim() ||
+                text.trim() != originalText.trim() ||
+                imageUri != originalImageUri
+
     val isSaveButtonEnabled: Boolean
-        get() = title.isNotBlank() && !isSaving
+        get() = title.isNotBlank() && !isSaving && hasChanges
 }
 
 sealed interface NoteEditorEvent {
@@ -37,14 +42,14 @@ sealed interface NoteEditorEvent {
     sealed interface Action : NoteEditorEvent {
         data object SaveClicked : Action
         data object BackClicked : Action
-        data object AttachmentClicked : Action
         data object RemoveImageClicked : Action
+        data object DiscardAndExit : Action
     }
 
     sealed interface Dialog : NoteEditorEvent {
-        data object GalleryClicked : Dialog
         data object CameraClicked : Dialog
-        data object DismissOverlay : Dialog
+        data object DismissVoiceDialog : Dialog
+        data object DismissUnsavedDialog : Dialog
     }
 
     sealed interface Media : NoteEditorEvent {
