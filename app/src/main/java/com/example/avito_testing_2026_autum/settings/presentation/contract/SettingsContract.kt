@@ -20,7 +20,7 @@ sealed interface SettingsEvent {
     data class OnThemeChanged(val themeMode: ThemeMode) : SettingsEvent
     data class OnAccentColorChanged(val accentColor: AccentColor) : SettingsEvent
     data object OnResetClicked : SettingsEvent
-    data object OnRetryBalanceClicked : SettingsEvent
+    data object OnRefreshBalanceClicked : SettingsEvent
 }
 
 sealed interface SettingsEffect

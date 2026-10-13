@@ -75,10 +75,10 @@ private fun applyAccentColor(
     if (accent == AccentColor.DEFAULT) return scheme
 
     val primaryColor = when (accent) {
-        AccentColor.BLUE -> AccentBlue
+        AccentColor.PURPLE -> Purple40
         AccentColor.GREEN -> AccentGreen
         AccentColor.ORANGE -> AccentOrange
-        AccentColor.PURPLE -> AccentPurple
+        AccentColor.PINK -> AccentPurple
     }
 
     return scheme.copy(
