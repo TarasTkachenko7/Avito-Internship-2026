@@ -9,6 +9,7 @@ class GetNotesUseCase(
     private val repository: NoteRepository
 ) {
     operator fun invoke(query: String, sortOrder: NoteSortOrder): Flow<List<Note>> {
-        return repository.getNotes(query, sortOrder)
+        val sanitizedQuery = query.trim()
+        return repository.getNotes(sanitizedQuery, sortOrder)
     }
 }

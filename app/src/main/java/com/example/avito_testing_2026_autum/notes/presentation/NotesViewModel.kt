@@ -1,6 +1,5 @@
 package com.example.avito_testing_2026_autum.notes.presentation
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.avito_testing_2026_autum.notes.domain.usecases.DeleteNoteUseCase
@@ -11,8 +10,8 @@ import com.example.avito_testing_2026_autum.notes.presentation.contract.NotesUiS
 import com.example.avito_testing_2026_autum.notes.presentation.mapper.toUiModel
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,12 +19,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NotesViewModel(
@@ -36,10 +34,7 @@ class NotesViewModel(
     private val _state = MutableStateFlow(NotesUiState())
     val state: StateFlow<NotesUiState> = _state.asStateFlow()
 
-    private val _effect = Channel<NotesEffect>(
-        capacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_LATEST
-    )
+    private val _effect = Channel<NotesEffect>(capacity = Channel.BUFFERED)
     val effect = _effect.receiveAsFlow()
 
     init {
@@ -47,50 +42,59 @@ class NotesViewModel(
     }
 
     private fun observeNotes() {
-        state
-            .map { it.appliedSearchQuery to it.sortOrder }
-            .distinctUntilChanged()
-            .flatMapLatest { (query, sortOrder) ->
-                getNotesUseCase(query, sortOrder)
-                    .map { domainNotes ->
-                        domainNotes.map { it.toUiModel() }.toPersistentList()
-                    }
-                    .catch { exception ->
-                        Log.e("NotesViewModel", "Failed to observe notes", exception)
-                        emit(persistentListOf())
-                    }
-            }
-            .onEach { notesList ->
-                _state.update { it.copy(notes = notesList, isLoading = false) }
-            }
-            .launchIn(viewModelScope)
+        viewModelScope.launch {
+            _state.map { it.appliedSearchQuery to it.sortOrder }.distinctUntilChanged()
+                .flatMapLatest { (query, sortOrder) ->
+                    getNotesUseCase(query, sortOrder)
+                        .map { domainNotes ->
+                            withContext(Dispatchers.Default) {
+                                domainNotes.map { it.toUiModel() }.toPersistentList()
+                            }
+                        }
+                        .catch { emit(persistentListOf()) }
+                }.collect { notesList ->
+                    _state.update { it.copy(notes = notesList, isLoading = false) }
+                }
+        }
     }
 
     fun handleEvent(event: NotesEvent) {
         when (event) {
-            is NotesEvent.OnSearchQueryChanged -> {
-                _state.update { it.copy(searchQuery = event.query) }
+            is NotesEvent.Query -> handleQuery(event)
+            is NotesEvent.Action -> handleAction(event)
+            is NotesEvent.Modal -> handleModal(event)
+        }
+    }
+
+    private fun handleQuery(event: NotesEvent.Query) {
+        when (event) {
+            is NotesEvent.Query.SearchSubmit -> {
+                _state.update { it.copy(appliedSearchQuery = event.query) }
             }
 
-            is NotesEvent.OnSearchClicked -> {
-                _state.update { it.copy(appliedSearchQuery = it.searchQuery) }
+            is NotesEvent.Query.SearchClear -> {
+                _state.update { it.copy(appliedSearchQuery = "") }
             }
 
-            is NotesEvent.OnSortClicked -> {
+            is NotesEvent.Query.SortSelected -> {
                 _state.update { it.copy(sortOrder = event.sortOrder) }
             }
+        }
+    }
 
-            is NotesEvent.OnNoteClicked -> {
+    private fun handleAction(event: NotesEvent.Action) {
+        when (event) {
+            is NotesEvent.Action.NoteCardClicked -> {
                 if (!state.value.isDeleteModeActive) {
-                    sendEffect(NotesEffect.NavigateToEditor(event.noteId))
+                    sendEffect(NotesEffect.NavigateToEditor(event.id))
                 }
             }
 
-            is NotesEvent.OnCreateNoteClicked -> {
+            is NotesEvent.Action.CreateNoteClicked -> {
                 sendEffect(NotesEffect.NavigateToEditor(null))
             }
 
-            is NotesEvent.OnToggleDeleteMode -> {
+            is NotesEvent.Action.ToggleDeleteMode -> {
                 _state.update {
                     it.copy(
                         isDeleteModeActive = !it.isDeleteModeActive,
@@ -99,11 +103,15 @@ class NotesViewModel(
                 }
             }
 
-            is NotesEvent.OnDeleteNote -> {
-                _state.update { it.copy(noteIdToDelete = event.noteId) }
+            is NotesEvent.Action.DeleteIconClicked -> {
+                _state.update { it.copy(noteIdToDelete = event.id) }
             }
+        }
+    }
 
-            is NotesEvent.OnConfirmDelete -> {
+    private fun handleModal(event: NotesEvent.Modal) {
+        when (event) {
+            is NotesEvent.Modal.ConfirmDelete -> {
                 val noteId = state.value.noteIdToDelete
                 if (noteId != null) {
                     viewModelScope.launch {
@@ -113,7 +121,7 @@ class NotesViewModel(
                 }
             }
 
-            is NotesEvent.OnDismissDeleteDialog -> {
+            is NotesEvent.Modal.DismissDeleteDialog -> {
                 _state.update { it.copy(noteIdToDelete = null) }
             }
         }

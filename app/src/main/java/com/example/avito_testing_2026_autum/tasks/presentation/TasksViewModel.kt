@@ -20,6 +20,7 @@ import com.example.avito_testing_2026_autum.voice.domain.model.VoiceState
 import com.example.avito_testing_2026_autum.voice.domain.recognition.SpeechRecognizerContract
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TasksViewModel(
@@ -65,7 +67,9 @@ class TasksViewModel(
                 .flatMapLatest { (query, sortType, filterType) ->
                     getTasksUseCase(query, sortType, filterType)
                         .map { domainTasks ->
-                            domainTasks.map { it.toUiModel() }.toPersistentList()
+                            withContext(Dispatchers.Default) {
+                                domainTasks.map { it.toUiModel() }.toPersistentList()
+                            }
                         }
                         .catch { emit(persistentListOf()) }
                 }

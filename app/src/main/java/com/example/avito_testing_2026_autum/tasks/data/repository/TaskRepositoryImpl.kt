@@ -23,14 +23,19 @@ class TaskRepositoryImpl(
         sortOrder: TaskSortOrder,
         filterType: TaskFilterType
     ): Flow<List<Task>> {
+        val sanitizedQuery = query.trim()
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_")
+
         val isCompletedFilter: Boolean? = when (filterType) {
             TaskFilterType.ALL -> null
             TaskFilterType.ACTIVE -> false
             TaskFilterType.COMPLETED -> true
         }
         val entitiesFlow = when (sortOrder) {
-            TaskSortOrder.DATE_DESC -> dao.getTasksDesc(query, isCompletedFilter)
-            TaskSortOrder.DATE_ASC -> dao.getTasksAsc(query, isCompletedFilter)
+            TaskSortOrder.DATE_DESC -> dao.getTasksDesc(sanitizedQuery, isCompletedFilter)
+            TaskSortOrder.DATE_ASC -> dao.getTasksAsc(sanitizedQuery, isCompletedFilter)
         }
         return entitiesFlow
             .map { list -> list.map { it.toDomain() } }

@@ -12,7 +12,7 @@ import com.example.avito_testing_2026_autum.tasks.data.local.TaskEntity
         NoteEntity::class,
         TaskEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
