@@ -5,6 +5,7 @@ import com.example.avito_testing_2026_autum.notes.domain.repository.NoteReposito
 import com.example.avito_testing_2026_autum.notes.domain.usecases.DeleteNoteUseCase
 import com.example.avito_testing_2026_autum.notes.domain.usecases.GetNotesUseCase
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.CreateTempImageFileUseCase
+import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.DeleteImageUseCase
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.GetNoteByIdUseCase
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.SaveImageUseCase
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.UpsertNoteUseCase
@@ -25,6 +26,7 @@ val notesModule = module {
     singleOf(::UpsertNoteUseCase)
     singleOf(::SaveImageUseCase)
     singleOf(::CreateTempImageFileUseCase)
+    singleOf(::DeleteImageUseCase)
 
     viewModelOf(::NotesViewModel)
     viewModelOf(::NoteEditorViewModel)

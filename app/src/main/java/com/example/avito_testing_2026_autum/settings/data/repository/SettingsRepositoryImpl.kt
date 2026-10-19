@@ -3,17 +3,14 @@ package com.example.avito_testing_2026_autum.settings.data.repository
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.avito_testing_2026_autum.core.dispatchers.DispatchersProvider
 import com.example.avito_testing_2026_autum.settings.domain.model.AccentColor
 import com.example.avito_testing_2026_autum.settings.domain.model.ThemeMode
 import com.example.avito_testing_2026_autum.settings.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import java.io.IOException
 
 class SettingsRepositoryImpl(
     private val dataStore: DataStore<Preferences>,
@@ -25,23 +22,15 @@ class SettingsRepositoryImpl(
         val ACCENT_COLOR = stringPreferencesKey("accent_color")
     }
 
-    private val safePreferencesFlow = dataStore.data
-        .catch { exception ->
-            if (exception is IOException) {
-                emit(emptyPreferences())
-            } else {
-                throw exception
-            }
-        }
-        .flowOn(dispatchers.io)
+    private val preferencesFlow = dataStore.data.flowOn(dispatchers.io)
 
-    override val themeMode: Flow<ThemeMode> = safePreferencesFlow
+    override val themeMode: Flow<ThemeMode> = preferencesFlow
         .map { preferences ->
             val name = preferences[PreferencesKeys.THEME_MODE]
             ThemeMode.entries.find { it.name == name } ?: ThemeMode.SYSTEM
         }
 
-    override val accentColor: Flow<AccentColor> = safePreferencesFlow
+    override val accentColor: Flow<AccentColor> = preferencesFlow
         .map { preferences ->
             val name = preferences[PreferencesKeys.ACCENT_COLOR]
             AccentColor.entries.find { it.name == name } ?: AccentColor.DEFAULT

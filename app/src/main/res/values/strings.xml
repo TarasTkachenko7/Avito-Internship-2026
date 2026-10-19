@@ -34,6 +34,8 @@
     <string name="add_task">Добавить задачу</string>
     <string name="no_tasks">Созданных задач пока нет...</string>
     <string name="action_retry">Обновить</string>
+    <string name="notes_error_load">Не удалось загрузить заметки</string>
+    <string name="notes_error_delete">Не удалось удалить заметку</string>
     <string name="available_tokens">Осталось токенов</string>
     <string name="gigachat_balance">Баланс гигачат</string>
     <string name="theme_title">Тема</string>
@@ -56,12 +58,18 @@
     <string name="voice_error_unknown">Произошла ошибка распознавания</string>
     <string name="action_done">Готово!</string>
     <string name="error_empty_title">Название не может быть пустым</string>
+    <string name="error_tasks_load">Не удалось загрузить задачи</string>
+    <string name="error_task_save">Не удалось сохранить задачу</string>
+    <string name="error_task_update">Не удалось обновить задачу</string>
+    <string name="error_task_delete">Не удалось удалить задачу</string>
+    <string name="retry">Повторить</string>
     <string name="error_gigachat">Ошибка гигачата</string>
     <string name="all">Все</string>
     <string name="active">Активные</string>
     <string name="done">Выполненные</string>
     <string name="tasks">Задачи</string>
     <string name="note_editor_error_not_found">Заметка не найдена</string>
+    <string name="note_editor_error_load">Не удалось загрузить заметку</string>
     <string name="note_editor_error_mic_permission">Для голосового ввода требуется доступ к микрофону</string>
     <string name="note_editor_error_camera_prep">Ошибка при подготовке камеры</string>
     <string name="note_editor_error_image_save">Не удалось сохранить изображение</string>
@@ -79,5 +87,12 @@
     <string name="action_exit">Выйти</string>
     <string name="tokens">" токенов"</string>
     <string name="accent_info">Цвет применяется к кнопкам, переключателям и активной вкладке навигации.</string>
+    <string name="error_saving_settings">Не удалось сохранить настройки</string>
+    <string name="error_loading_settings">Не удалось загрузить настройки</string>
+    <string name="accent_default_name">Синий</string>
+    <string name="accent_violet_name">Фиолетовый</string>
+    <string name="accent_green_name">Зелёный</string>
+    <string name="accent_orange_name">Оранжевый</string>
+    <string name="accent_pink_name">Розовый</string>
 
 </resources>

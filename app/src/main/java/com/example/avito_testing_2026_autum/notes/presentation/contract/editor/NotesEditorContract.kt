@@ -8,6 +8,8 @@ import com.example.avito_testing_2026_autum.voice.domain.model.VoiceState
 data class NoteEditorUiState(
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
+    val isImageProcessing: Boolean = false,
+    val hasLoadError: Boolean = false,
 
     val title: String = "",
     val text: String = "",
@@ -29,7 +31,7 @@ data class NoteEditorUiState(
                 imageUri != originalImageUri
 
     val isSaveButtonEnabled: Boolean
-        get() = title.isNotBlank() && !isSaving && hasChanges
+        get() = title.isNotBlank() && !isSaving && !isImageProcessing && hasChanges
 }
 
 sealed interface NoteEditorEvent {
@@ -41,6 +43,7 @@ sealed interface NoteEditorEvent {
 
     sealed interface Action : NoteEditorEvent {
         data object SaveClicked : Action
+        data object RetryLoading : Action
         data object BackClicked : Action
         data object RemoveImageClicked : Action
         data object DiscardAndExit : Action
@@ -55,6 +58,7 @@ sealed interface NoteEditorEvent {
     sealed interface Media : NoteEditorEvent {
         data class ImagePicked(val uriString: String) : Media
         data object CameraCaptureSuccess : Media
+        data object CameraCaptureCancelled : Media
     }
 
     sealed interface Voice : NoteEditorEvent {

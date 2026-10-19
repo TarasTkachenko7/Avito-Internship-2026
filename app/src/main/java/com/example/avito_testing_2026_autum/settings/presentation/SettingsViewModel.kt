@@ -16,10 +16,12 @@ import com.example.avito_testing_2026_autum.settings.presentation.contract.Setti
 import com.example.avito_testing_2026_autum.settings.presentation.contract.SettingsEvent
 import com.example.avito_testing_2026_autum.settings.presentation.contract.SettingsUiState
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -54,6 +56,9 @@ class SettingsViewModel(
                 getAccentColorUseCase()
             ) { theme, color ->
                 theme to color
+            }.catch { exception ->
+                Log.e("SettingsViewModel", "Failed to read settings", exception)
+                _state.update { it.copy(settingsError = UiText.StringResource(R.string.error_loading_settings)) }
             }.collect { (theme, color) ->
                 _state.update { it.copy(themeMode = theme, accentColor = color) }
             }
@@ -95,20 +100,36 @@ class SettingsViewModel(
     fun handleEvent(event: SettingsEvent) {
         when (event) {
             is SettingsEvent.OnThemeChanged -> {
-                viewModelScope.launch { setThemeModeUseCase(event.themeMode) }
+                viewModelScope.launch { updateSettings { setThemeModeUseCase(event.themeMode) } }
             }
 
             is SettingsEvent.OnAccentColorChanged -> {
-                viewModelScope.launch { setAccentColorUseCase(event.accentColor) }
+                viewModelScope.launch { updateSettings { setAccentColorUseCase(event.accentColor) } }
             }
 
             is SettingsEvent.OnResetClicked -> {
-                viewModelScope.launch { resetSettingsUseCase() }
+                viewModelScope.launch { updateSettings { resetSettingsUseCase() } }
             }
 
             is SettingsEvent.OnRefreshBalanceClicked -> {
                 loadBalance()
             }
+
+            is SettingsEvent.OnSettingsErrorDismissed -> {
+                _state.update { it.copy(settingsError = null) }
+            }
+        }
+    }
+
+    private suspend fun updateSettings(update: suspend () -> Unit) {
+        try {
+            update()
+            _state.update { it.copy(settingsError = null) }
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
+            Log.e("SettingsViewModel", "Failed to update settings", exception)
+            _state.update { it.copy(settingsError = UiText.StringResource(R.string.error_saving_settings)) }
         }
     }
 }

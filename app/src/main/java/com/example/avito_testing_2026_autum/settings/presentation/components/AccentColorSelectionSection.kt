@@ -2,7 +2,7 @@ package com.example.avito_testing_2026_autum.settings.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +22,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -33,7 +36,7 @@ import com.example.avito_testing_2026_autum.ui.theme.AccentBlue
 import com.example.avito_testing_2026_autum.ui.theme.AccentGreen
 import com.example.avito_testing_2026_autum.ui.theme.AccentOrange
 import com.example.avito_testing_2026_autum.ui.theme.AccentPurple
-import com.example.avito_testing_2026_autum.ui.theme.Purple40
+import com.example.avito_testing_2026_autum.ui.theme.AccentViolet
 
 @Composable
 fun AccentColorSelectionSection(
@@ -44,7 +47,7 @@ fun AccentColorSelectionSection(
     val colorOptions = remember {
         listOf(
             AccentColor.DEFAULT to AccentBlue,
-            AccentColor.PURPLE to Purple40,
+            AccentColor.PURPLE to AccentViolet,
             AccentColor.GREEN to AccentGreen,
             AccentColor.ORANGE to AccentOrange,
             AccentColor.PINK to AccentPurple
@@ -68,13 +71,22 @@ fun AccentColorSelectionSection(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 colorOptions.forEach { (accentColor, colorValue) ->
                     val isSelected = selectedColor == accentColor
+                    val colorName = stringResource(accentColor.toNameRes())
                     Box(
                         modifier = Modifier
-                            .size(52.dp)
+                            .size(48.dp)
+                            .selectable(
+                                selected = isSelected,
+                                role = Role.RadioButton,
+                                onClick = { onColorSelected(accentColor) }
+                            )
+                            .semantics {
+                                contentDescription = colorName
+                            }
                             .border(
                                 width = if (isSelected) 2.dp else 0.dp,
                                 color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
@@ -83,7 +95,6 @@ fun AccentColorSelectionSection(
                             .padding(4.dp)
                             .clip(CircleShape)
                             .background(colorValue)
-                            .clickable { onColorSelected(accentColor) }
                     )
                 }
             }
@@ -97,4 +108,12 @@ fun AccentColorSelectionSection(
             )
         }
     }
+}
+
+private fun AccentColor.toNameRes(): Int = when (this) {
+    AccentColor.DEFAULT -> R.string.accent_default_name
+    AccentColor.PURPLE -> R.string.accent_violet_name
+    AccentColor.GREEN -> R.string.accent_green_name
+    AccentColor.ORANGE -> R.string.accent_orange_name
+    AccentColor.PINK -> R.string.accent_pink_name
 }

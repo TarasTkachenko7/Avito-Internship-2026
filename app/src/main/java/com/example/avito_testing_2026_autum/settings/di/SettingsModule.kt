@@ -10,6 +10,7 @@ import com.example.avito_testing_2026_autum.settings.domain.usecases.ResetSettin
 import com.example.avito_testing_2026_autum.settings.domain.usecases.SetAccentColorUseCase
 import com.example.avito_testing_2026_autum.settings.domain.usecases.SetThemeModeUseCase
 import com.example.avito_testing_2026_autum.settings.presentation.SettingsViewModel
+import com.example.avito_testing_2026_autum.settings.presentation.SettingsThemeViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -29,5 +30,6 @@ val settingsModule = module {
     singleOf(::ResetSettingsUseCase)
 
     viewModelOf(::SettingsViewModel)
+    viewModelOf(::SettingsThemeViewModel)
 
 }

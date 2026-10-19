@@ -9,16 +9,16 @@ class TaskMapperTest {
 
     @Test
     fun `toDomain maps TaskEntity to Task correctly`() {
-        val entity = TaskEntity(id = 1L, title = "Task", isCompleted = true)
-        val expected = Task(id = 1L, title = "Task", isCompleted = true)
+        val entity = TaskEntity(id = 1L, title = "Task", isCompleted = true, createdAt = 123L)
+        val expected = Task(id = 1L, title = "Task", isCompleted = true, createdAt = 123L)
 
         assertEquals(expected, entity.toDomain())
     }
 
     @Test
     fun `toEntity maps Task to TaskEntity correctly`() {
-        val domain = Task(id = 1L, title = "Task", isCompleted = true)
-        val expected = TaskEntity(id = 1L, title = "Task", isCompleted = true)
+        val domain = Task(id = 1L, title = "Task", isCompleted = true, createdAt = 123L)
+        val expected = TaskEntity(id = 1L, title = "Task", isCompleted = true, createdAt = 123L)
 
         assertEquals(expected, domain.toEntity())
     }

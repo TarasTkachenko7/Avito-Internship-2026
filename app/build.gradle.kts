@@ -85,7 +85,6 @@ dependencies {
     implementation(libs.retrofit.converter.kotlinx.serialization)
     implementation(libs.okhttp)
     // Обрати внимание: в Kotlin DSL дефисы превращаются в точки!
-    implementation(libs.okhttp.logging.interceptor)
 
     // Room
     implementation(libs.androidx.room)

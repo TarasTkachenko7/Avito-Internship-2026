@@ -13,7 +13,8 @@ sealed interface GigaChatBalanceState {
 data class SettingsUiState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val accentColor: AccentColor = AccentColor.DEFAULT,
-    val balanceState: GigaChatBalanceState = GigaChatBalanceState.Loading
+    val balanceState: GigaChatBalanceState = GigaChatBalanceState.Loading,
+    val settingsError: UiText? = null
 )
 
 sealed interface SettingsEvent {
@@ -21,6 +22,7 @@ sealed interface SettingsEvent {
     data class OnAccentColorChanged(val accentColor: AccentColor) : SettingsEvent
     data object OnResetClicked : SettingsEvent
     data object OnRefreshBalanceClicked : SettingsEvent
+    data object OnSettingsErrorDismissed : SettingsEvent
 }
 
 sealed interface SettingsEffect
