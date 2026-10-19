@@ -43,7 +43,7 @@ class AiRepositoryImpl(
             )
 
             val request = ChatRequestDto(
-                model = "GigaChat-3-Lightning", // Самая быстрая и дешёвая модель из доступных
+                model = "GigaChat-3-Lightning",
                 messages = listOf(systemMessage, userMessage),
                 temperature = 0.3f
             )

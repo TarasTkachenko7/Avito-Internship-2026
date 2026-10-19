@@ -12,12 +12,12 @@ class AuthRepositoryImpl(
     private val authApi: GigaChatAuthApi,
     private val authKey: String,
     private val dispatchers: DispatchersProvider
-): AuthRepository {
+) : AuthRepository {
 
     private var cachedToken: String? = null
     private var tokenExpiresAt: Long = 0L
 
-    override suspend fun getAccessToken(): Result<String>  = withContext(dispatchers.io){
+    override suspend fun getAccessToken(): Result<String> = withContext(dispatchers.io) {
         runCatching {
             val currentTime = System.currentTimeMillis()
 

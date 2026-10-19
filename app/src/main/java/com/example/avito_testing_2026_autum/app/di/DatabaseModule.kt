@@ -18,4 +18,4 @@ val databaseModule = module {
     single { get<AppDatabase>().noteDao() }
     single { get<AppDatabase>().taskDao() }
 
-}
+}

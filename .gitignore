@@ -13,3 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+/AGENTS.md
+/AGENTS.override.md
+/.codex/
+/docs/
