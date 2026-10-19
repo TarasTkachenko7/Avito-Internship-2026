@@ -13,7 +13,6 @@ import com.example.avito_testing_2026_autum.ai.domain.usecases.GetGigaChatBalanc
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -33,15 +32,8 @@ val aiNetworkModule = module {
         }
     }
 
-    single {
-        HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
-    }
-
     single(named("authOkHttpClient")) {
         OkHttpClient.Builder()
-            .addInterceptor(get<HttpLoggingInterceptor>())
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .build()
@@ -77,7 +69,6 @@ val aiNetworkModule = module {
     single(named("apiOkHttpClient")) {
         OkHttpClient.Builder()
             .addInterceptor(get<AuthInterceptor>())
-            .addInterceptor(get<HttpLoggingInterceptor>())
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .build()
