@@ -23,11 +23,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -45,6 +48,7 @@ import com.example.avito_testing_2026_autum.notes.presentation.components.editor
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorEffect
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorEvent
 import com.example.avito_testing_2026_autum.notes.presentation.contract.editor.NoteEditorUiState
+import com.example.avito_testing_2026_autum.voice.presentation.components.VoiceInputDialog
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
 
@@ -56,13 +60,14 @@ fun NoteEditorScreenRoot(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
         onResult = { success ->
             if (success) {
                 viewModel.handleEvent(NoteEditorEvent.Media.CameraCaptureSuccess)
-            }
+        }
         }
     )
 
@@ -103,6 +108,7 @@ fun NoteEditorScreenRoot(
                 }
 
                 is NoteEditorEffect.ShowMessage -> {
+                    snackbarHostState.showSnackbar(effect.message.asString(context))
                 }
             }
         }
@@ -116,6 +122,7 @@ fun NoteEditorScreenRoot(
         NoteEditorScreenContent(
             state = state,
             onEvent = viewModel::handleEvent,
+            snackbarHostState = snackbarHostState,
             onVoiceClick = {
                 val hasPermission = ContextCompat.checkSelfPermission(
                     context,
@@ -139,6 +146,7 @@ fun NoteEditorScreenRoot(
 private fun NoteEditorScreenContent(
     state: NoteEditorUiState,
     onEvent: (NoteEditorEvent) -> Unit,
+    snackbarHostState: SnackbarHostState,
     onVoiceClick: () -> Unit,
     onGalleryPick: () -> Unit,
     modifier: Modifier = Modifier
@@ -176,6 +184,7 @@ private fun NoteEditorScreenContent(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = modifier
             .fillMaxSize()
             .pointerInput(Unit) {
@@ -194,27 +203,30 @@ private fun NoteEditorScreenContent(
             )
         },
         bottomBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp)
-            ) {
-                Button(
-                    onClick = {
-                        focusManager.clearFocus()
-                        onEvent(NoteEditorEvent.Action.SaveClicked)
-                    },
+            if (!state.hasLoadError) {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp),
-                    enabled = state.isSaveButtonEnabled,
-                    shape = RoundedCornerShape(16.dp)
+                        .padding(horizontal = 16.dp, vertical = 16.dp)
                 ) {
-                    Text(
-                        text = stringResource(R.string.action_save),
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    Button(
+                        onClick = {
+                            focusManager.clearFocus()
+                            onEvent(NoteEditorEvent.Action.SaveClicked)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        enabled = state.isSaveButtonEnabled,
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.action_save),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
                 }
+            }
             }
         }
     ) { paddingValues ->
@@ -226,21 +238,45 @@ private fun NoteEditorScreenContent(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            NoteEditorInputCard(
-                title = state.title,
-                text = state.text,
-                onTitleChange = { onEvent(NoteEditorEvent.Input.TitleChanged(it)) },
-                onTextChange = { onEvent(NoteEditorEvent.Input.TextChanged(it)) },
-                onVoiceClick = onVoiceClick,
-                onClearTitle = { onEvent(NoteEditorEvent.Input.TitleChanged("")) }
-            )
-            NoteEditorImageCard(
-                imageUri = state.imageUri,
-                onGalleryClick = onGalleryPick,
-                onCameraClick = { onEvent(NoteEditorEvent.Dialog.CameraClicked) },
-                onRemoveClick = { onEvent(NoteEditorEvent.Action.RemoveImageClicked) }
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+            if (state.hasLoadError) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.note_editor_error_load),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Button(onClick = { onEvent(NoteEditorEvent.Action.RetryLoading) }) {
+                        Text(stringResource(R.string.action_retry))
+                    }
+                }
+            } else {
+                NoteEditorInputCard(
+                    title = state.title,
+                    text = state.text,
+                    onTitleChange = { onEvent(NoteEditorEvent.Input.TitleChanged(it)) },
+                    onTextChange = { onEvent(NoteEditorEvent.Input.TextChanged(it)) },
+                    onVoiceClick = onVoiceClick,
+                    onClearTitle = { onEvent(NoteEditorEvent.Input.TitleChanged("")) }
+                )
+                NoteEditorImageCard(
+                    imageUri = state.imageUri,
+                    onGalleryClick = onGalleryPick,
+                    onCameraClick = { onEvent(NoteEditorEvent.Dialog.CameraClicked) },
+                    onRemoveClick = { onEvent(NoteEditorEvent.Action.RemoveImageClicked) }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
         }
+    }
+
+    if (state.showVoiceDialog) {
+        VoiceInputDialog(
+            voiceState = state.voiceState,
+            onStopListening = { onEvent(NoteEditorEvent.Voice.StopVoiceListening) },
+            onDismiss = { onEvent(NoteEditorEvent.Dialog.DismissVoiceDialog) }
+        )
     }
 }

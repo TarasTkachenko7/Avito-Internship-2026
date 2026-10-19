@@ -34,6 +34,8 @@
     <string name="add_task">Добавить задачу</string>
     <string name="no_tasks">Созданных задач пока нет...</string>
     <string name="action_retry">Обновить</string>
+    <string name="notes_error_load">Не удалось загрузить заметки</string>
+    <string name="notes_error_delete">Не удалось удалить заметку</string>
     <string name="available_tokens">Осталось токенов</string>
     <string name="gigachat_balance">Баланс гигачат</string>
     <string name="theme_title">Тема</string>
@@ -62,6 +64,7 @@
     <string name="done">Выполненные</string>
     <string name="tasks">Задачи</string>
     <string name="note_editor_error_not_found">Заметка не найдена</string>
+    <string name="note_editor_error_load">Не удалось загрузить заметку</string>
     <string name="note_editor_error_mic_permission">Для голосового ввода требуется доступ к микрофону</string>
     <string name="note_editor_error_camera_prep">Ошибка при подготовке камеры</string>
     <string name="note_editor_error_image_save">Не удалось сохранить изображение</string>

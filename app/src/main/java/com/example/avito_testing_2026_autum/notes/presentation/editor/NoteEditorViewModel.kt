@@ -77,7 +77,13 @@ class NoteEditorViewModel(
         }
 
         viewModelScope.launch {
-            val note = getNoteByIdUseCase(noteId)
+            loadNote()
+        }
+    }
+
+    private suspend fun loadNote() {
+        try {
+            val note = getNoteByIdUseCase(noteId ?: return)
             if (note != null) {
                 savedStateHandle[KEY_ORIGINAL_TITLE] = note.title
                 savedStateHandle[KEY_ORIGINAL_TEXT] = note.text
@@ -101,14 +107,19 @@ class NoteEditorViewModel(
                         originalText = note.text,
                         originalImageUri = note.imageUri,
                         originalCreatedAt = note.createdAt,
-                        isLoading = false
+                        isLoading = false,
+                        hasLoadError = false
                     )
                 }
             } else {
-                _state.update { it.copy(isLoading = false) }
-                sendEffect(NoteEditorEffect.ShowMessage(UiText.StringResource(R.string.not_find)))
-                sendEffect(NoteEditorEffect.NavigateBack)
+                _state.update { it.copy(isLoading = false, hasLoadError = true) }
+                sendEffect(NoteEditorEffect.ShowMessage(UiText.StringResource(R.string.note_editor_error_not_found)))
             }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            _state.update { it.copy(isLoading = false, hasLoadError = true) }
+            sendEffect(NoteEditorEffect.ShowMessage(UiText.StringResource(R.string.note_editor_error_load)))
         }
     }
 
@@ -168,6 +179,10 @@ class NoteEditorViewModel(
 
     private fun handleAction(event: NoteEditorEvent.Action) {
         when (event) {
+            is NoteEditorEvent.Action.RetryLoading -> {
+                _state.update { it.copy(isLoading = true, hasLoadError = false) }
+                viewModelScope.launch { loadNote() }
+            }
             is NoteEditorEvent.Action.RemoveImageClicked -> {
                 savedStateHandle.remove<String>(KEY_IMAGE_URI)
                 _state.update { it.copy(imageUri = null) }
@@ -290,6 +305,9 @@ class NoteEditorViewModel(
                 }
             } catch (e: CancellationException) {
                 throw e
+            } catch (_: Exception) {
+                _state.update { it.copy(isSaving = false) }
+                sendEffect(NoteEditorEffect.ShowMessage(UiText.StringResource(R.string.note_editor_error_note_save)))
             }
         }
     }

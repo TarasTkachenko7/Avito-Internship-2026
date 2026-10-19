@@ -1,6 +1,7 @@
 package com.example.avito_testing_2026_autum.notes.presentation.contract
 
 import androidx.compose.runtime.Immutable
+import com.example.avito_testing_2026_autum.core.utils.UiText
 import com.example.avito_testing_2026_autum.notes.domain.model.NoteSortOrder
 import com.example.avito_testing_2026_autum.notes.presentation.models.NoteUiModel
 import kotlinx.collections.immutable.ImmutableList
@@ -9,6 +10,8 @@ import kotlinx.collections.immutable.persistentListOf
 @Immutable
 data class NotesUiState(
     val isLoading: Boolean = true,
+    val hasLoadError: Boolean = false,
+    val reloadVersion: Int = 0,
     val notes: ImmutableList<NoteUiModel> = persistentListOf(),
     val appliedSearchQuery: String = "",
     val isDeleteModeActive: Boolean = false,
@@ -25,6 +28,7 @@ sealed interface NotesEvent {
     }
 
     sealed interface Action : NotesEvent {
+        data object RetryLoading : Action
         data class DeleteIconClicked(val id: Long) : Action
         data class NoteCardClicked(val id: Long) : Action
         data object CreateNoteClicked : Action
@@ -39,4 +43,5 @@ sealed interface NotesEvent {
 
 sealed interface NotesEffect {
     data class NavigateToEditor(val noteId: Long? = null) : NotesEffect
+    data class ShowMessage(val message: UiText) : NotesEffect
 }

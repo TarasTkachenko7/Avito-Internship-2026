@@ -19,17 +19,22 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Button
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -54,11 +59,14 @@ fun NotesScreenRoot(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is NotesEffect.NavigateToEditor -> onNavigateToEditor(effect.noteId)
+                is NotesEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message.asString(context))
             }
         }
     }
@@ -66,6 +74,7 @@ fun NotesScreenRoot(
     NotesScreenContent(
         state = state,
         onEvent = viewModel::handleEvent,
+        snackbarHostState = snackbarHostState,
         modifier = modifier
     )
 }
@@ -74,12 +83,14 @@ fun NotesScreenRoot(
 private fun NotesScreenContent(
     state: NotesUiState,
     onEvent: (NotesEvent) -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
     var searchQueryInput by rememberSaveable { mutableStateOf(state.appliedSearchQuery) }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = modifier
             .fillMaxSize()
             .pointerInput(Unit) {
@@ -141,6 +152,22 @@ private fun NotesScreenContent(
                 when {
                     state.isLoading -> {
                         CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
+
+                    state.hasLoadError -> {
+                        Column(
+                            modifier = Modifier.align(Alignment.Center).padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = stringResource(R.string.notes_error_load),
+                                color = MaterialTheme.colorScheme.error,
+                                textAlign = TextAlign.Center
+                            )
+                            Button(onClick = { onEvent(NotesEvent.Action.RetryLoading) }) {
+                                Text(stringResource(R.string.action_retry))
+                            }
+                        }
                     }
 
                     state.notes.isEmpty() -> {
