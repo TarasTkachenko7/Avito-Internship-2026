@@ -19,7 +19,7 @@ class AuthInterceptor(
             .header("Accept", "application/json")
             .header("User-Agent", "AvitoNotesTasksApp")
 
-        if (!token.isNullOrBlank()) {
+        if (token.isNotBlank()) {
             requestBuilder.header("Authorization", "Bearer $token")
         }
 
