@@ -14,6 +14,7 @@ sealed interface TasksModalOverlay {
     data object CreateOptions : TasksModalOverlay
     data class VoiceInput(val voiceState: VoiceState = VoiceState.Idle) : TasksModalOverlay
     data object AiProcessing : TasksModalOverlay
+    data object AiSaveFailed : TasksModalOverlay
 }
 
 @Immutable
@@ -77,6 +78,7 @@ sealed interface TasksEvent {
         data object StartVoice : Modal
         data object VoiceConfirm : Modal
         data object PermissionDenied : Modal
+        data object RetryAiSave : Modal
     }
 }
 

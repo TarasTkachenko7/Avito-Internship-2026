@@ -386,24 +386,42 @@ private fun TasksOverlays(
 
         is TasksModalOverlay.AiProcessing -> {
             Dialog(
-                onDismissRequest = {},
+                onDismissRequest = { onEvent(TasksEvent.Modal.DismissCurrentModal) },
                 properties = DialogProperties(
-                    dismissOnBackPress = false,
-                    dismissOnClickOutside = false
+                    dismissOnBackPress = true,
+                    dismissOnClickOutside = true
                 )
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .size(100.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.surface,
-                            shape = RoundedCornerShape(16.dp)
-                        )
+                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
+                        .padding(24.dp)
                 ) {
                     CircularProgressIndicator()
+                    TextButton(onClick = { onEvent(TasksEvent.Modal.DismissCurrentModal) }) {
+                        Text("Отменить")
+                    }
                 }
             }
+        }
+
+        TasksModalOverlay.AiSaveFailed -> {
+            AlertDialog(
+                onDismissRequest = { onEvent(TasksEvent.Modal.DismissCurrentModal) },
+                title = { Text("Не удалось сохранить задачу") },
+                text = { Text("Текст задачи сохранён для повтора.") },
+                confirmButton = {
+                    TextButton(onClick = { onEvent(TasksEvent.Modal.RetryAiSave) }) {
+                        Text("Повторить сохранение")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { onEvent(TasksEvent.Modal.DismissCurrentModal) }) {
+                        Text("Отмена")
+                    }
+                }
+            )
         }
 
         null -> Unit

@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicLong
 
 class AndroidSpeechRecognizer(
     private val context: Context,
@@ -41,13 +42,17 @@ class AndroidSpeechRecognizer(
         }
     }
 
-    private val recognitionListener = object : RecognitionListener {
-        override fun onReadyForSpeech(params: Bundle?) {
-            _voiceState.value = VoiceState.Recording()
+    private val sessionId = AtomicLong(0L)
+
+    private fun recognitionListener(forSession: Long) = object : RecognitionListener {
+        private inline fun publishIfCurrent(update: () -> Unit) {
+            if (sessionId.get() == forSession) update()
         }
 
+        override fun onReadyForSpeech(params: Bundle?) = publishIfCurrent { _voiceState.value = VoiceState.Recording() }
+
         override fun onBeginningOfSpeech() {
-            _voiceState.value = VoiceState.Recording()
+            publishIfCurrent { _voiceState.value = VoiceState.Recording() }
         }
 
         override fun onRmsChanged(rmsdB: Float) = Unit
@@ -55,22 +60,24 @@ class AndroidSpeechRecognizer(
         override fun onBufferReceived(buffer: ByteArray?) = Unit
 
         override fun onEndOfSpeech() {
-            _voiceState.value = VoiceState.Processing
+            publishIfCurrent { _voiceState.value = VoiceState.Processing }
         }
 
         override fun onError(errorCode: Int) {
             val error = mapErrorCodeToVoiceError(errorCode)
-            _voiceState.value = VoiceState.Error(error)
+            publishIfCurrent { _voiceState.value = VoiceState.Error(error) }
         }
 
         override fun onResults(results: Bundle?) {
             val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
             val recognizedText = matches?.firstOrNull()?.trim().orEmpty()
 
-            if (recognizedText.isNotBlank()) {
-                _voiceState.value = VoiceState.Success(recognizedText)
-            } else {
-                _voiceState.value = VoiceState.Error(VoiceError.RecognitionFailed)
+            publishIfCurrent {
+                if (recognizedText.isNotBlank()) {
+                    _voiceState.value = VoiceState.Success(recognizedText)
+                } else {
+                    _voiceState.value = VoiceState.Error(VoiceError.RecognitionFailed)
+                }
             }
         }
 
@@ -80,7 +87,9 @@ class AndroidSpeechRecognizer(
     }
 
     override fun startListening() {
+        val currentSession = sessionId.incrementAndGet()
         scope.launch {
+            if (sessionId.get() != currentSession) return@launch
             if (!SpeechRecognizer.isRecognitionAvailable(context)) {
                 _voiceState.value = VoiceState.Error(
                     VoiceError.Unknown("Сервис распознавания недоступен на устройстве")
@@ -89,9 +98,10 @@ class AndroidSpeechRecognizer(
             }
 
             cleanUpRecognizer()
+            if (sessionId.get() != currentSession) return@launch
 
             speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
-                setRecognitionListener(recognitionListener)
+                setRecognitionListener(recognitionListener(currentSession))
                 startListening(recognizerIntent)
             }
         }
@@ -105,15 +115,18 @@ class AndroidSpeechRecognizer(
     }
 
     override fun cancel() {
+        val canceledSession = sessionId.incrementAndGet()
         scope.launch {
             cleanUpRecognizer()
-            _voiceState.value = VoiceState.Idle
+            if (sessionId.get() == canceledSession) _voiceState.value = VoiceState.Idle
         }
     }
 
     override fun reset() {
+        val resetSession = sessionId.incrementAndGet()
         scope.launch {
-            _voiceState.value = VoiceState.Idle
+            cleanUpRecognizer()
+            if (sessionId.get() == resetSession) _voiceState.value = VoiceState.Idle
         }
     }
 

@@ -136,6 +136,7 @@ class NoteEditorViewModel(
             speechRecognizer.voiceState.collect { newVoiceState ->
                 when (newVoiceState) {
                     is VoiceState.Success -> {
+                        if (!_state.value.showVoiceDialog) return@collect
                         val currentText = _state.value.text
                         val appendedText =
                             if (currentText.isBlank()) newVoiceState.text else "$currentText ${newVoiceState.text}"
@@ -261,6 +262,7 @@ class NoteEditorViewModel(
             }
 
             is NoteEditorEvent.Voice.PermissionDenied -> {
+                speechRecognizer.cancel()
                 _state.update { it.copy(showVoiceDialog = false) }
                 sendEffect(NoteEditorEffect.ShowMessage(UiText.StringResource(R.string.voice_error_permission_denied)))
             }

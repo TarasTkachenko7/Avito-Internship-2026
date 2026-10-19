@@ -39,6 +39,9 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -55,6 +58,8 @@ class TasksViewModel(
 ) : ViewModel() {
 
     private val retryTasksTrigger = MutableStateFlow(0)
+    private var aiProcessingJob: Job? = null
+    private var pendingAiTaskTitle: String? = null
     private val _state = MutableStateFlow(
         TasksUiState(
             isCreatingTask = savedStateHandle[KEY_IS_CREATING] ?: false,
@@ -106,6 +111,7 @@ class TasksViewModel(
             .onEach { voiceState ->
                 when (voiceState) {
                     is VoiceState.Success -> {
+                        if (_state.value.currentOverlay !is TasksModalOverlay.VoiceInput) return@onEach
                         _state.update { it.copy(currentOverlay = TasksModalOverlay.AiProcessing) }
                         speechRecognizer.reset()
                         processVoiceWithGigaChat(voiceState.text)
@@ -124,19 +130,44 @@ class TasksViewModel(
     }
 
     private fun processVoiceWithGigaChat(rawText: String) {
-        viewModelScope.launch {
-            formulateTaskUseCase(rawText)
-                .onSuccess { formulatedText ->
-                    upsertTaskUseCase(rawTitle = formulatedText)
+        aiProcessingJob?.cancel()
+        aiProcessingJob = viewModelScope.launch {
+            val result = formulateTaskUseCase(rawText)
+            currentCoroutineContext().ensureActive()
+            result.fold(
+                onSuccess = { formulatedText ->
+                    if (formulatedText.isBlank()) {
+                        _state.update { it.copy(currentOverlay = null) }
+                        sendEffect(TasksEffect.ShowError(UiText.StringResource(R.string.error_gigachat)))
+                    } else {
+                        pendingAiTaskTitle = formulatedText.trim()
+                        savePendingAiTask()
+                    }
+                },
+                onFailure = {
                     _state.update { it.copy(currentOverlay = null) }
+                    sendEffect(TasksEffect.ShowError(UiText.StringResource(R.string.error_gigachat)))
                 }
-                .onFailure { error ->
-                    _state.update { it.copy(currentOverlay = null) }
-                    sendEffect(
-                        TasksEffect.ShowError(UiText.StringResource(R.string.error_gigachat))
-                    )
-                }
+            )
         }
+    }
+
+    private suspend fun savePendingAiTask() {
+        val title = pendingAiTaskTitle ?: return
+        val result = upsertTaskUseCase(rawTitle = title)
+        currentCoroutineContext().ensureActive()
+        if (result.isSuccess) {
+            pendingAiTaskTitle = null
+            _state.update { it.copy(currentOverlay = null) }
+        } else {
+            _state.update { it.copy(currentOverlay = TasksModalOverlay.AiSaveFailed) }
+            sendEffect(TasksEffect.ShowError(UiText.StringResource(R.string.error_task_save)))
+        }
+    }
+
+    private fun retryPendingAiTaskSave() {
+        if (aiProcessingJob?.isActive == true || pendingAiTaskTitle == null) return
+        aiProcessingJob = viewModelScope.launch { savePendingAiTask() }
     }
 
     fun handleEvent(event: TasksEvent) {
@@ -350,6 +381,9 @@ class TasksViewModel(
 
             is TasksEvent.Modal.DismissCurrentModal -> {
                 speechRecognizer.cancel()
+                aiProcessingJob?.cancel()
+                aiProcessingJob = null
+                pendingAiTaskTitle = null
                 _state.update { it.copy(currentOverlay = null) }
             }
 
@@ -359,7 +393,9 @@ class TasksViewModel(
             }
 
             is TasksEvent.Modal.VoiceConfirm -> speechRecognizer.stopListening()
+            is TasksEvent.Modal.RetryAiSave -> retryPendingAiTaskSave()
             is TasksEvent.Modal.PermissionDenied -> {
+                speechRecognizer.cancel()
                 _state.update { it.copy(currentOverlay = null) }
                 sendEffect(
                     TasksEffect.ShowError(UiText.StringResource(R.string.voice_error_permission_denied))
