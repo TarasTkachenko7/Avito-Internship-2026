@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -224,6 +226,15 @@ private fun TasksScreenContent(
                         CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                     }
 
+                    state.hasLoadError && state.tasks.isEmpty() && !state.isCreatingTask -> {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.align(Alignment.Center)) {
+                            Text(stringResource(R.string.error_tasks_load))
+                            Button(onClick = { onEvent(TasksEvent.Query.Retry) }) {
+                                Text(stringResource(R.string.retry))
+                            }
+                        }
+                    }
+
                     state.tasks.isEmpty() && !state.isCreatingTask -> {
                         EmptyTasksState(
                             isSearchActive = state.appliedSearchQuery.isNotEmpty(),
@@ -232,14 +243,32 @@ private fun TasksScreenContent(
                     }
 
                     else -> {
-                        TasksList(
-                            tasks = state.tasks,
-                            isCreatingTask = state.isCreatingTask,
-                            editingTaskId = state.editingTaskId,
-                            isDeleteModeActive = state.isDeleteModeActive,
-                            listState = listState,
-                            onEvent = onEvent
-                        )
+                        Column {
+                            if (state.hasLoadError) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                                ) {
+                                    Text(stringResource(R.string.error_tasks_load), modifier = Modifier.weight(1f))
+                                    TextButton(onClick = { onEvent(TasksEvent.Query.Retry) }) {
+                                        Text(stringResource(R.string.retry))
+                                    }
+                                }
+                            }
+                            TasksList(
+                                tasks = state.tasks,
+                                isCreatingTask = state.isCreatingTask,
+                                creationDraft = state.creationDraft,
+                                isSavingCreation = state.isSavingCreation,
+                                editingTaskId = state.editingTaskId,
+                                editingDraftTitle = state.editingDraftTitle,
+                                isSavingEdit = state.isSavingEdit,
+                                isDeleteModeActive = state.isDeleteModeActive,
+                                listState = listState,
+                                onEvent = onEvent,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
                 }
             }
@@ -257,7 +286,11 @@ private fun TasksScreenContent(
 private fun TasksList(
     tasks: ImmutableList<TaskUiModel>,
     isCreatingTask: Boolean,
+    creationDraft: String,
+    isSavingCreation: Boolean,
     editingTaskId: Long?,
+    editingDraftTitle: String,
+    isSavingEdit: Boolean,
     isDeleteModeActive: Boolean,
     listState: LazyListState,
     onEvent: (TasksEvent) -> Unit,
@@ -271,6 +304,9 @@ private fun TasksList(
         if (isCreatingTask) {
             item(key = "inline_input_key") {
                 TaskInlineInputItem(
+                    initialTitle = creationDraft,
+                    isSaving = isSavingCreation,
+                    onTitleChange = { onEvent(TasksEvent.Creation.DraftChanged(it)) },
                     onSave = { onEvent(TasksEvent.Creation.Save(it)) },
                     onCancel = { onEvent(TasksEvent.Creation.Cancel) }
                 )
@@ -283,7 +319,9 @@ private fun TasksList(
         ) { task ->
             if (editingTaskId == task.id) {
                 TaskInlineInputItem(
-                    initialTitle = task.title,
+                    initialTitle = editingDraftTitle,
+                    isSaving = isSavingEdit,
+                    onTitleChange = { onEvent(TasksEvent.Edit.DraftChanged(task.id, it)) },
                     onSave = { onEvent(TasksEvent.Edit.Save(task.id, it)) },
                     onCancel = { onEvent(TasksEvent.Edit.Cancel) }
                 )

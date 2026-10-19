@@ -19,6 +19,7 @@ sealed interface TasksModalOverlay {
 @Immutable
 data class TasksUiState(
     val isLoading: Boolean = true,
+    val hasLoadError: Boolean = false,
     val tasks: ImmutableList<TaskUiModel> = persistentListOf(),
 
     val appliedSearchQuery: String = "",
@@ -26,7 +27,11 @@ data class TasksUiState(
     val filterType: TaskFilterType = TaskFilterType.ALL,
 
     val isCreatingTask: Boolean = false,
+    val creationDraft: String = "",
+    val isSavingCreation: Boolean = false,
     val editingTaskId: Long? = null,
+    val editingDraftTitle: String = "",
+    val isSavingEdit: Boolean = false,
     val isDeleteModeActive: Boolean = false,
 
     val currentOverlay: TasksModalOverlay? = null
@@ -39,6 +44,7 @@ sealed interface TasksEvent {
         data object SearchClear : Query
         data class SortSelected(val sortOrder: TaskSortOrder) : Query
         data class FilterSelected(val filterType: TaskFilterType) : Query
+        data object Retry : Query
     }
 
     // 2. Взаимодействие со списком
@@ -51,6 +57,7 @@ sealed interface TasksEvent {
     // 3. Инлайн-создание задачи текстом
     sealed interface Creation : TasksEvent {
         data object Start : Creation
+        data class DraftChanged(val title: String) : Creation
         data class Save(val title: String) : Creation
         data object Cancel : Creation
     }
@@ -58,6 +65,7 @@ sealed interface TasksEvent {
     // 4. Редактирование задачи
     sealed interface Edit : TasksEvent {
         data class Start(val taskId: Long) : Edit
+        data class DraftChanged(val taskId: Long, val title: String) : Edit
         data class Save(val taskId: Long, val newTitle: String) : Edit
         data object Cancel : Edit
     }

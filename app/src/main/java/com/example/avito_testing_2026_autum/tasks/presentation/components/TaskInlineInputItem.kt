@@ -40,6 +40,8 @@ import kotlinx.coroutines.android.awaitFrame
 @Composable
 fun TaskInlineInputItem(
     initialTitle: String = "",
+    isSaving: Boolean = false,
+    onTitleChange: (String) -> Unit = {},
     onSave: (String) -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
@@ -78,7 +80,11 @@ fun TaskInlineInputItem(
         ) {
             TextField(
                 value = titleValue,
-                onValueChange = { titleValue = it },
+                onValueChange = {
+                    titleValue = it
+                    onTitleChange(it.text)
+                },
+                enabled = !isSaving,
                 modifier = Modifier
                     .weight(1f)
                     .focusRequester(focusRequester),
@@ -101,7 +107,7 @@ fun TaskInlineInputItem(
                 singleLine = true
             )
 
-            IconButton(onClick = {
+            IconButton(enabled = !isSaving, onClick = {
                 keyboardController?.hide()
                 onCancel()
             }) {
@@ -116,7 +122,7 @@ fun TaskInlineInputItem(
                     keyboardController?.hide()
                     onSave(titleValue.text.trim())
                 },
-                enabled = titleValue.text.isNotBlank()
+                enabled = titleValue.text.isNotBlank() && !isSaving
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,

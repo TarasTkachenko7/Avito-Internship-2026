@@ -58,6 +58,11 @@
     <string name="voice_error_unknown">Произошла ошибка распознавания</string>
     <string name="action_done">Готово!</string>
     <string name="error_empty_title">Название не может быть пустым</string>
+    <string name="error_tasks_load">Не удалось загрузить задачи</string>
+    <string name="error_task_save">Не удалось сохранить задачу</string>
+    <string name="error_task_update">Не удалось обновить задачу</string>
+    <string name="error_task_delete">Не удалось удалить задачу</string>
+    <string name="retry">Повторить</string>
     <string name="error_gigachat">Ошибка гигачата</string>
     <string name="all">Все</string>
     <string name="active">Активные</string>
