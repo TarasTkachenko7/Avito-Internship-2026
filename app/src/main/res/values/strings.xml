@@ -87,5 +87,12 @@
     <string name="action_exit">Выйти</string>
     <string name="tokens">" токенов"</string>
     <string name="accent_info">Цвет применяется к кнопкам, переключателям и активной вкладке навигации.</string>
+    <string name="error_saving_settings">Не удалось сохранить настройки</string>
+    <string name="error_loading_settings">Не удалось загрузить настройки</string>
+    <string name="accent_default_name">Синий</string>
+    <string name="accent_violet_name">Фиолетовый</string>
+    <string name="accent_green_name">Зелёный</string>
+    <string name="accent_orange_name">Оранжевый</string>
+    <string name="accent_pink_name">Розовый</string>
 
 </resources>

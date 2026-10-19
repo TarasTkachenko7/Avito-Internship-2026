@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -73,7 +75,9 @@ private fun AppBottomBar(
     currentDestination: NavDestination?,
     onItemClick: (NavigationItem) -> Unit
 ) {
-    NavigationBar {
+    NavigationBar(
+        containerColor = colorScheme.surface
+    ) {
         NavigationItem.entries.forEach { item ->
             val isSelected = currentDestination?.hierarchy?.any {
                 it.hasRoute(item.route::class)
@@ -82,6 +86,13 @@ private fun AppBottomBar(
             NavigationBarItem(
                 selected = isSelected,
                 onClick = { onItemClick(item) },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = colorScheme.onPrimary,
+                    selectedTextColor = colorScheme.primary,
+                    indicatorColor = colorScheme.primary,
+                    unselectedIconColor = colorScheme.onSurfaceVariant,
+                    unselectedTextColor = colorScheme.onSurfaceVariant
+                ),
                 icon = {
                     Icon(
                         imageVector = item.icon,

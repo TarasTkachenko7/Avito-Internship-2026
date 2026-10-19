@@ -1,46 +1,26 @@
 package com.example.avito_testing_2026_autum.ui.theme
 
 import android.app.Activity
-import android.os.Build
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import com.example.avito_testing_2026_autum.settings.domain.model.AccentColor
 import com.example.avito_testing_2026_autum.settings.domain.model.ThemeMode
-
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
-)
 
 @Composable
 fun AvitoNotesTasksTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
     accentColor: AccentColor = AccentColor.DEFAULT,
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val isDarkTheme = when (themeMode) {
@@ -49,17 +29,18 @@ fun AvitoNotesTasksTheme(
         ThemeMode.DARK -> true
     }
 
-    var colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (isDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    val colorScheme = createColorScheme(isDarkTheme, accentColor)
+    val view = LocalView.current
+    val activity = LocalContext.current.findActivity()
+
+    SideEffect {
+        activity?.window?.let { window ->
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !isDarkTheme
+                isAppearanceLightNavigationBars = !isDarkTheme
+            }
         }
-
-        isDarkTheme -> DarkColorScheme
-        else -> LightColorScheme
     }
-
-    colorScheme = applyAccentColor(colorScheme, accentColor)
 
     MaterialTheme(
         colorScheme = colorScheme,
@@ -68,20 +49,55 @@ fun AvitoNotesTasksTheme(
     )
 }
 
-private fun applyAccentColor(
-    scheme: ColorScheme,
-    accent: AccentColor
-): ColorScheme {
-    if (accent == AccentColor.DEFAULT) return scheme
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
 
-    val primaryColor = when (accent) {
-        AccentColor.PURPLE -> Purple40
+private fun createColorScheme(isDark: Boolean, accent: AccentColor): ColorScheme {
+    val primary = when (accent) {
+        AccentColor.DEFAULT -> AccentBlue
+        AccentColor.PURPLE -> AccentViolet
         AccentColor.GREEN -> AccentGreen
         AccentColor.ORANGE -> AccentOrange
         AccentColor.PINK -> AccentPurple
     }
+    val onPrimary = if (accent == AccentColor.DEFAULT) Color(0xFF0F1216) else Color.White
 
-    return scheme.copy(
-        primary = primaryColor
-    )
+    return if (isDark) {
+        darkColorScheme(
+            primary = primary,
+            onPrimary = onPrimary,
+            secondary = primary,
+            onSecondary = onPrimary,
+            tertiary = primary,
+            onTertiary = onPrimary,
+            background = Color(0xFF0D1013),
+            onBackground = Color(0xFFF4F5F7),
+            surface = Color(0xFF181B1F),
+            onSurface = Color(0xFFF4F5F7),
+            surfaceVariant = Color(0xFF22262B),
+            onSurfaceVariant = Color(0xFF9BA0A6),
+            outline = Color(0xFF767B81),
+            outlineVariant = Color(0xFF41464D)
+        )
+    } else {
+        lightColorScheme(
+            primary = primary,
+            onPrimary = onPrimary,
+            secondary = primary,
+            onSecondary = onPrimary,
+            tertiary = primary,
+            onTertiary = onPrimary,
+            background = Color(0xFFF3F4F6),
+            onBackground = Color(0xFF0F1216),
+            surface = Color.White,
+            onSurface = Color(0xFF0F1216),
+            surfaceVariant = Color(0xFFE7E9ED),
+            onSurfaceVariant = Color(0xFF626A75),
+            outline = Color(0xFF6D7480),
+            outlineVariant = Color(0xFFD0D4DA)
+        )
+    }
 }
