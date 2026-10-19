@@ -1,6 +1,7 @@
 package com.example.avito_testing_2026_autum.settings.presentation
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -49,10 +50,12 @@ private fun SettingsScreenContent(
     onEvent: (SettingsEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Scaffold(modifier = modifier) { _ ->
+    Scaffold(modifier = modifier) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
         ) {
             Text(
                 text = stringResource(R.string.navigation_item_settings),

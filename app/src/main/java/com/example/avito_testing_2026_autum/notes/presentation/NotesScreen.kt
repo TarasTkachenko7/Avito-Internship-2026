@@ -2,6 +2,7 @@ package com.example.avito_testing_2026_autum.notes.presentation
 
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -98,10 +99,12 @@ private fun NotesScreenContent(
                 }
             }
         }
-    ) { _ ->
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
         ) {
             Text(
                 text = stringResource(R.string.notes_title),

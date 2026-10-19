@@ -3,13 +3,14 @@ package com.example.avito_testing_2026_autum.notes.data.repository
 import com.example.avito_testing_2026_autum.core.dispatchers.TestDispatchersProvider
 import com.example.avito_testing_2026_autum.notes.data.local.NoteDao
 import com.example.avito_testing_2026_autum.notes.data.local.NoteEntity
+import com.example.avito_testing_2026_autum.notes.domain.model.NoteSortOrder
 import com.example.avito_testing_2026_autum.notes.domain.model.Note
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import junit.framework.Assert.assertEquals
-import junit.framework.Assert.assertNull
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -67,17 +68,17 @@ class NoteRepositoryImplTest {
     fun `getNotesDesc returns flow of mapped notes`() = runTest(testDispatcher) {
         val query = "Test"
         val entities = listOf(
-            NoteEntity(id = 1L, title = "Test 1", text = null, imageUri = null, createdAt = 200L),
-            NoteEntity(id = 2L, title = "Test 2", text = null, imageUri = null, createdAt = 100L)
+            NoteEntity(id = 1L, title = "Test 1", text = "", imageUri = null, createdAt = 200L),
+            NoteEntity(id = 2L, title = "Test 2", text = "", imageUri = null, createdAt = 100L)
         )
         val expectedNotes = listOf(
-            Note(id = 1L, title = "Test 1", text = null, imageUri = null, createdAt = 200L),
-            Note(id = 2L, title = "Test 2", text = null, imageUri = null, createdAt = 100L)
+            Note(id = 1L, title = "Test 1", text = "", imageUri = null, createdAt = 200L),
+            Note(id = 2L, title = "Test 2", text = "", imageUri = null, createdAt = 100L)
         )
 
         every { dao.getNotesDesc(query) } returns flowOf(entities)
 
-        val actualNotes = repository.getNotesDesc(query).first()
+        val actualNotes = repository.getNotes(query, NoteSortOrder.DATE_DESC).first()
 
         assertEquals(expectedNotes, actualNotes)
     }
@@ -99,17 +100,17 @@ class NoteRepositoryImplTest {
     fun `getNotesAsc returns flow of mapped notes`() = runTest(testDispatcher) {
         val query = "Test"
         val entities = listOf(
-            NoteEntity(id = 2L, title = "Test 2", text = null, imageUri = null, createdAt = 100L),
-            NoteEntity(id = 1L, title = "Test 1", text = null, imageUri = null, createdAt = 200L)
+            NoteEntity(id = 2L, title = "Test 2", text = "", imageUri = null, createdAt = 100L),
+            NoteEntity(id = 1L, title = "Test 1", text = "", imageUri = null, createdAt = 200L)
         )
         val expectedNotes = listOf(
-            Note(id = 2L, title = "Test 2", text = null, imageUri = null, createdAt = 100L),
-            Note(id = 1L, title = "Test 1", text = null, imageUri = null, createdAt = 200L)
+            Note(id = 2L, title = "Test 2", text = "", imageUri = null, createdAt = 100L),
+            Note(id = 1L, title = "Test 1", text = "", imageUri = null, createdAt = 200L)
         )
 
         every { dao.getNotesAsc(query) } returns flowOf(entities)
 
-        val actualNotes = repository.getNotesAsc(query).first()
+        val actualNotes = repository.getNotes(query, NoteSortOrder.DATE_ASC).first()
 
         assertEquals(expectedNotes, actualNotes)
     }
@@ -126,12 +127,22 @@ class NoteRepositoryImplTest {
     }
 
     @Test
+    fun `search escapes literal characters and preserves spaces`() = runTest(testDispatcher) {
+        every { dao.getNotesDesc(" \\\\\\%\\_ ") } returns flowOf(emptyList())
+
+        val notes = repository.getNotes(" \\%_ ", NoteSortOrder.DATE_DESC).first()
+
+        assertEquals(emptyList<Note>(), notes)
+        coVerify(exactly = 1) { dao.getNotesDesc(" \\\\\\%\\_ ") }
+    }
+
+    @Test
     fun `getNotesDesc returns empty list when database is empty`() = runTest(testDispatcher) {
         val query = "NonExistent"
 
         every { dao.getNotesDesc(query) } returns flowOf(emptyList())
 
-        val actualNotes = repository.getNotesDesc(query).first()
+        val actualNotes = repository.getNotes(query, NoteSortOrder.DATE_DESC).first()
 
         assertEquals(emptyList<Note>(), actualNotes)
     }
