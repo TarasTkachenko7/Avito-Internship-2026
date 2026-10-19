@@ -2,6 +2,7 @@ package com.example.avito_testing_2026_autum.notes.presentation.editor
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -67,6 +68,8 @@ fun NoteEditorScreenRoot(
         onResult = { success ->
             if (success) {
                 viewModel.handleEvent(NoteEditorEvent.Media.CameraCaptureSuccess)
+            } else {
+                viewModel.handleEvent(NoteEditorEvent.Media.CameraCaptureCancelled)
         }
         }
     )
@@ -75,6 +78,12 @@ fun NoteEditorScreenRoot(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             if (uri != null) {
+                runCatching {
+                    context.contentResolver.takePersistableUriPermission(
+                        uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                }
                 viewModel.handleEvent(NoteEditorEvent.Media.ImagePicked(uri.toString()))
             }
         }
@@ -226,7 +235,6 @@ private fun NoteEditorScreenContent(
                         )
                     }
                 }
-            }
             }
         }
     ) { paddingValues ->

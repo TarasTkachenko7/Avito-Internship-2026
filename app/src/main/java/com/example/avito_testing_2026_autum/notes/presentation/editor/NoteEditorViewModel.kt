@@ -8,6 +8,7 @@ import com.example.avito_testing_2026_autum.R
 import com.example.avito_testing_2026_autum.app.navigation.Screen
 import com.example.avito_testing_2026_autum.core.utils.UiText
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.CreateTempImageFileUseCase
+import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.DeleteImageUseCase
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.GetNoteByIdUseCase
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.SaveImageUseCase
 import com.example.avito_testing_2026_autum.notes.domain.usecases.editor.UpsertNoteUseCase
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import kotlin.coroutines.cancellation.CancellationException
 
 class NoteEditorViewModel(
@@ -30,6 +32,7 @@ class NoteEditorViewModel(
     private val getNoteByIdUseCase: GetNoteByIdUseCase,
     private val upsertNoteUseCase: UpsertNoteUseCase,
     private val saveImageUseCase: SaveImageUseCase,
+    private val deleteImageUseCase: DeleteImageUseCase,
     private val createTempImageFileUseCase: CreateTempImageFileUseCase,
     private val speechRecognizer: SpeechRecognizerContract
 ) : ViewModel() {
@@ -41,6 +44,7 @@ class NoteEditorViewModel(
         private const val KEY_TEXT = "state_text"
         private const val KEY_TEMP_URI = "state_temp_uri"
         private const val KEY_IMAGE_URI = "state_image_uri"
+        private const val KEY_PENDING_IMAGE_SOURCE = "state_pending_image_source"
 
         private const val KEY_ORIGINAL_TITLE = "state_orig_title"
         private const val KEY_ORIGINAL_TEXT = "state_orig_text"
@@ -69,7 +73,10 @@ class NoteEditorViewModel(
     init {
         observeVoiceState()
         initNoteData()
+        if (noteId == null || savedStateHandle.contains(KEY_ORIGINAL_TITLE)) resumePendingImageImport()
     }
+
+    private var imageImportJob: Job? = null
 
     private fun initNoteData() {
         if (noteId == null || savedStateHandle.contains(KEY_ORIGINAL_TITLE)) {
@@ -111,6 +118,7 @@ class NoteEditorViewModel(
                         hasLoadError = false
                     )
                 }
+                resumePendingImageImport()
             } else {
                 _state.update { it.copy(isLoading = false, hasLoadError = true) }
                 sendEffect(NoteEditorEffect.ShowMessage(UiText.StringResource(R.string.note_editor_error_not_found)))
@@ -184,8 +192,13 @@ class NoteEditorViewModel(
                 viewModelScope.launch { loadNote() }
             }
             is NoteEditorEvent.Action.RemoveImageClicked -> {
+                val currentImage = _state.value.imageUri
+                imageImportJob?.cancel()
+                imageImportJob = null
+                savedStateHandle.remove<String>(KEY_PENDING_IMAGE_SOURCE)
                 savedStateHandle.remove<String>(KEY_IMAGE_URI)
-                _state.update { it.copy(imageUri = null) }
+                _state.update { it.copy(imageUri = null, isImageProcessing = false) }
+                if (currentImage != null && currentImage != _state.value.originalImageUri) deleteImage(currentImage)
             }
 
             is NoteEditorEvent.Action.BackClicked -> {
@@ -198,6 +211,7 @@ class NoteEditorViewModel(
 
             is NoteEditorEvent.Action.DiscardAndExit -> {
                 _state.update { it.copy(showUnsavedChangesDialog = false) }
+                discardDraftFiles()
                 sendEffect(NoteEditorEffect.NavigateBack)
             }
 
@@ -225,9 +239,12 @@ class NoteEditorViewModel(
             is NoteEditorEvent.Media.CameraCaptureSuccess -> {
                 _state.value.tempCameraUri?.let { path ->
                     processAndSaveImage(path)
-                    savedStateHandle.remove<String>(KEY_TEMP_URI)
-                    _state.update { it.copy(tempCameraUri = null) }
                 }
+            }
+            is NoteEditorEvent.Media.CameraCaptureCancelled -> {
+                _state.value.tempCameraUri?.let(::deleteImage)
+                savedStateHandle.remove<String>(KEY_TEMP_URI)
+                _state.update { it.copy(tempCameraUri = null) }
             }
         }
     }
@@ -267,21 +284,56 @@ class NoteEditorViewModel(
     }
 
     private fun processAndSaveImage(sourceUri: String) {
-        viewModelScope.launch {
+        savedStateHandle[KEY_PENDING_IMAGE_SOURCE] = sourceUri
+        imageImportJob?.cancel()
+        _state.update { it.copy(isImageProcessing = true) }
+        imageImportJob = viewModelScope.launch {
             try {
                 val permanentPath = saveImageUseCase(sourceUri)
                 if (permanentPath != null) {
+                    val previousImage = _state.value.imageUri
                     savedStateHandle[KEY_IMAGE_URI] = permanentPath
-                    _state.update { it.copy(imageUri = permanentPath) }
+                    savedStateHandle.remove<String>(KEY_PENDING_IMAGE_SOURCE)
+                    if (savedStateHandle.get<String>(KEY_TEMP_URI) == sourceUri) {
+                        savedStateHandle.remove<String>(KEY_TEMP_URI)
+                        _state.update { it.copy(tempCameraUri = null) }
+                    }
+                    _state.update { it.copy(imageUri = permanentPath, isImageProcessing = false) }
+                    if (previousImage != null && previousImage != _state.value.originalImageUri && previousImage != permanentPath) {
+                        deleteImage(previousImage)
+                    }
+                    if (sourceUri.startsWith("/")) deleteImage(sourceUri)
                 } else {
+                    _state.update { it.copy(isImageProcessing = false) }
                     sendEffect(NoteEditorEffect.ShowMessage(UiText.StringResource(R.string.note_editor_error_image_save)))
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
+                _state.update { it.copy(isImageProcessing = false) }
                 sendEffect(NoteEditorEffect.ShowMessage(UiText.StringResource(R.string.note_editor_error_image_save)))
             }
         }
+    }
+
+    private fun resumePendingImageImport() {
+        savedStateHandle.get<String>(KEY_PENDING_IMAGE_SOURCE)?.let(::processAndSaveImage)
+    }
+
+    private fun deleteImage(uri: String) {
+        viewModelScope.launch {
+            try { deleteImageUseCase(uri) } catch (e: CancellationException) { throw e } catch (_: Exception) { }
+        }
+    }
+
+    private fun discardDraftFiles() {
+        imageImportJob?.cancel()
+        imageImportJob = null
+        val current = _state.value.imageUri
+        if (current != null && current != _state.value.originalImageUri) deleteImage(current)
+        _state.value.tempCameraUri?.let(::deleteImage)
+        savedStateHandle.remove<String>(KEY_TEMP_URI)
+        savedStateHandle.remove<String>(KEY_PENDING_IMAGE_SOURCE)
     }
 
     private fun saveNote() {
@@ -298,6 +350,10 @@ class NoteEditorViewModel(
                     imageUri = currentState.imageUri,
                     createdAt = currentState.originalCreatedAt
                 ).onSuccess {
+                    val oldImage = currentState.originalImageUri
+                    if (oldImage != null && oldImage != currentState.imageUri) deleteImage(oldImage)
+                    _state.value.tempCameraUri?.let(::deleteImage)
+                    savedStateHandle.remove<String>(KEY_TEMP_URI)
                     sendEffect(NoteEditorEffect.NavigateBack)
                 }.onFailure {
                     _state.update { it.copy(isSaving = false) }

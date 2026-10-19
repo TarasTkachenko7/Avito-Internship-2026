@@ -20,7 +20,7 @@ class FileManagerImpl(
     private val appContext = context.applicationContext
 
     override suspend fun createTempImageFile(prefix: String): File = withContext(dispatchers.io) {
-        val storageDir = appContext.cacheDir.apply { mkdirs() }
+        val storageDir = appContext.filesDir.apply { mkdirs() }
         File.createTempFile(prefix, ".jpg", storageDir)
     }
 
@@ -37,10 +37,15 @@ class FileManagerImpl(
                 val filesDirectory = appContext.filesDir.apply { mkdirs() }
                 val destinationFile = File(filesDirectory, fileName)
 
-                inputStream.use { input ->
-                    FileOutputStream(destinationFile).use { output ->
-                        input.copyTo(output)
+                try {
+                    inputStream.use { input ->
+                        FileOutputStream(destinationFile).use { output ->
+                            input.copyTo(output)
+                        }
                     }
+                } catch (e: Exception) {
+                    destinationFile.delete()
+                    throw e
                 }
 
                 Uri.fromFile(destinationFile).toString()
@@ -55,8 +60,11 @@ class FileManagerImpl(
     override suspend fun deleteFile(uriString: String): Boolean = withContext(dispatchers.io) {
         try {
             val uri = uriString.toUri()
+            if (uri.scheme != null && uri.scheme != "file") return@withContext false
             val path = uri.path ?: return@withContext false
-            val file = File(path)
+            val file = File(path).canonicalFile
+            val ownedDirectory = appContext.filesDir.canonicalFile
+            if (file.parentFile != ownedDirectory) return@withContext false
             if (file.exists()) {
                 file.delete()
             } else {
